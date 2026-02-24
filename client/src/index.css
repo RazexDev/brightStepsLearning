@@ -1,13 +1,22 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* =========================================
+   CSS VARIABLES
+========================================= */
+:root {
+  --mint:       #b8f0e6;
+  --mint-deep:  #5ecfba;
+  --peach:      #ffd6c0;
+  --peach-deep: #f4956a;
+  --lavender:   #ddd6fe;
+  --sky:        #bae6fd;
+  --sky-deep:   #38bdf8;
+  --yellow:     #fef08a;
+  --yellow-deep:#f59e0b;
+  --white:      #ffffff;
+  --text-dark:  #2d3a4a;
+  --text-mid:   #5a6f85;
+  --bg:         #f0fbf8;
+  --radius-xl:  32px;
+  --radius-pill:999px;
 }

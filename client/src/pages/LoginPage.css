@@ -1,0 +1,112 @@
+/* LoginPage.css */
+.login-wrapper {
+  min-height: 100vh;
+  background-color: var(--bg);
+  background-image: radial-gradient(ellipse 600px 400px at 50% -20%, #d4f5ee88 0%, transparent 70%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Nunito', sans-serif;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--white);
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 12px 32px -6px rgba(0,0,0,0.07);
+  border-bottom: 6px solid var(--mint-deep);
+  text-align: center;
+  animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.login-header {
+  margin-bottom: 30px;
+}
+
+.login-header h2 {
+  font-family: 'Fredoka One', cursive;
+  color: var(--text-dark);
+  font-size: 2rem;
+  letter-spacing: 0.5px;
+  margin-top: 15px;
+}
+
+.login-header p {
+  color: var(--text-mid);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  color: var(--text-dark);
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  color: var(--text-dark);
+  transition: all 0.3s ease;
+  background-color: #f8fafc;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--mint-deep);
+  background-color: var(--white);
+  box-shadow: 0 0 0 4px rgba(94, 207, 186, 0.15);
+}
+
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--mint-deep) 0%, #38b2a8 100%);
+  color: white;
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 0px #3aada3;
+  margin-top: 10px;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0px #3aada3, 0 10px 20px rgba(94, 207, 186, 0.3);
+}
+
+.submit-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0px #3aada3;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 25px;
+  color: var(--text-mid);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--peach-deep);
+}

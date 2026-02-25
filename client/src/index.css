@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* =========================================
+   CSS VARIABLES
+========================================= */
+:root {
+  --mint:       #b8f0e6;
+  --mint-deep:  #5ecfba;
+  --peach:      #ffd6c0;
+  --peach-deep: #f4956a;
+  --lavender:   #ddd6fe;
+  --sky:        #bae6fd;
+  --sky-deep:   #38bdf8;
+  --yellow:     #fef08a;
+  --yellow-deep:#f59e0b;
+  --white:      #ffffff;
+  --text-dark:  #2d3a4a;
+  --text-mid:   #5a6f85;
+  --bg:         #f0fbf8;
+  --radius-xl:  32px;
+  --radius-pill:999px;
+}

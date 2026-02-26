@@ -79,10 +79,14 @@ export default function LoginPage() {
             Log In
           </button>
         </form>
+        <p style={{ marginTop: '20px', color: 'var(--text-mid)', fontWeight: '600', marginBottom: '15px' }}>
+          Don't have an account? <Link to="/register" style={{ color: 'var(--mint-deep)', textDecoration: 'none' }}>Sign Up</Link>
+        </p>
 
         <Link to="/" className="back-link">
           ← Back to Home
         </Link>
+
         
       </div>
     </div>

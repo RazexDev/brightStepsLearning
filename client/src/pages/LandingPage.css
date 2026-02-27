@@ -1,0 +1,423 @@
+/* =========================================
+   IMPORT FONTS — Fredoka (bubbly headings) + Nunito (friendly body)
+========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* =========================================
+   CSS VARIABLES
+========================================= */
+:root {
+  --mint:       #b8f0e6;
+  --mint-deep:  #5ecfba;
+  --peach:      #ffd6c0;
+  --peach-deep: #f4956a;
+  --lavender:   #ddd6fe;
+  --sky:        #bae6fd;
+  --sky-deep:   #38bdf8;
+  --yellow:     #fef08a;
+  --yellow-deep:#f59e0b;
+  --white:      #ffffff;
+  --text-dark:  #2d3a4a;
+  --text-mid:   #5a6f85;
+  --bg:         #f0fbf8;
+  --radius-xl:  32px;
+  --radius-pill:999px;
+}
+
+/* =========================================
+   1. GLOBAL
+========================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.landing-container {
+  min-height: 100vh;
+  background-color: var(--bg);
+  /* Soft layered background with floating blob shapes via SVG data URIs */
+  background-image:
+    radial-gradient(ellipse 600px 400px at 10% 20%, #d4f5ee88 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 90% 70%, #ffd6c088 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 95%, #ddd6fe66 0%, transparent 70%);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text-dark);
+  overflow-x: hidden;
+}
+
+/* =========================================
+   2. SPLASH SCREEN
+========================================= */
+.splash-screen {
+  position: fixed; inset: 0;
+  background: linear-gradient(145deg, #d4f5ee 0%, #fce7dc 50%, #e8e3ff 100%);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 9999;
+}
+
+.splash-content {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+}
+
+.splash-icon-anim {
+  animation: floatIcon 2s ease-in-out infinite;
+  filter: drop-shadow(0 8px 20px rgba(244,149,106,0.4));
+}
+
+.splash-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 3.2rem;
+  color: var(--mint-deep);
+  letter-spacing: 2px;
+  text-shadow: 0 4px 12px rgba(94,207,186,0.3);
+}
+
+.loading-dots {
+  display: flex; gap: 10px; margin-top: 6px;
+}
+.loading-dots span {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  animation: bounceDots 1.4s infinite ease-in-out both;
+}
+.loading-dots span:nth-child(1) { background: var(--peach-deep);   animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { background: var(--mint-deep);    animation-delay: -0.16s; }
+.loading-dots span:nth-child(3) { background: var(--sky-deep); }
+
+/* =========================================
+   3. NAVBAR
+========================================= */
+.navbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 60px;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.9);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.logo-text {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+  color: var(--mint-deep);
+  display: flex; align-items: center; gap: 10px;
+  letter-spacing: 0.5px;
+}
+
+.logo-icon {
+  animation: spinSlow 8s linear infinite;
+}
+
+.login-btn {
+  background: linear-gradient(135deg, var(--peach-deep), #e07b55);
+  color: #fff;
+  padding: 11px 28px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 18px rgba(244,149,106,0.35);
+  letter-spacing: 0.3px;
+}
+.login-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 24px rgba(244,149,106,0.5);
+}
+
+/* =========================================
+   4. HERO SECTION
+========================================= */
+.hero-section {
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  padding: 70px 24px 40px;
+  position: relative;
+}
+
+/* Decorative floating shapes behind hero */
+.hero-section::before,
+.hero-section::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.hero-section::before {
+  width: 260px; height: 260px;
+  background: var(--yellow);
+  top: -40px; left: -80px;
+  animation: drift 7s ease-in-out infinite alternate;
+  filter: blur(2px);
+}
+.hero-section::after {
+  width: 180px; height: 180px;
+  background: var(--lavender);
+  bottom: 0; right: -60px;
+  animation: drift 9s ease-in-out infinite alternate-reverse;
+  filter: blur(2px);
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--white);
+  border: 2px solid var(--mint);
+  color: var(--mint-deep);
+  font-weight: 800;
+  font-size: 0.875rem;
+  padding: 7px 18px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 28px;
+  box-shadow: 0 4px 12px rgba(94,207,186,0.2);
+  letter-spacing: 0.5px;
+}
+
+.hero-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1.15;
+  color: var(--text-dark);
+  margin-bottom: 22px;
+  max-width: 700px;
+  /* Coloured highlight on key word */
+}
+
+.hero-title .highlight {
+  color: var(--mint-deep);
+  position: relative;
+  display: inline-block;
+}
+.hero-title .highlight::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  height: 10px;
+  background: var(--yellow);
+  border-radius: 4px;
+  z-index: -1;
+  opacity: 0.7;
+}
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  max-width: 580px;
+  line-height: 1.75;
+  margin-bottom: 64px;
+  color: var(--text-mid);
+  font-weight: 600;
+}
+
+/* =========================================
+   5. FEATURES GRID & CARDS
+========================================= */
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.feature-card {
+  background: var(--white);
+  padding: 38px 28px 32px;
+  border-radius: var(--radius-xl);
+  width: 280px;
+  box-shadow:
+    0 4px 0px 0px rgba(0,0,0,0.06),
+    0 12px 32px -6px rgba(0,0,0,0.07);
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+  /* Thick coloured bottom border gives card a 3D "chunky toy" effect */
+  border-bottom: 6px solid transparent;
+}
+
+/* Each card gets its own accent colour */
+.feature-card.card-games   { border-bottom-color: var(--peach-deep); }
+.feature-card.card-progress { border-bottom-color: var(--sky-deep); }
+.feature-card.card-routine  { border-bottom-color: #4ade80; }
+
+/* Top decorative blob inside card */
+.feature-card::before {
+  content: '';
+  position: absolute;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  top: -40px; right: -30px;
+  opacity: 0.15;
+  pointer-events: none;
+}
+.feature-card.card-games::before   { background: var(--peach-deep); }
+.feature-card.card-progress::before { background: var(--sky-deep); }
+.feature-card.card-routine::before  { background: #4ade80; }
+
+.feature-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow:
+    0 6px 0px 0px rgba(0,0,0,0.08),
+    0 24px 48px -8px rgba(0,0,0,0.12);
+}
+
+.icon-wrapper {
+  display: flex; justify-content: center; align-items: center;
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  margin-bottom: 22px;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.feature-card:hover .icon-wrapper {
+  transform: scale(1.15) rotate(8deg);
+}
+
+.feature-card h3 {
+  font-family: 'Fredoka One', cursive;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  font-size: 1.45rem;
+  letter-spacing: 0.3px;
+}
+.feature-card p {
+  color: var(--text-mid);
+  font-size: 0.975rem;
+  line-height: 1.65;
+  font-weight: 600;
+}
+
+/* =========================================
+   6. CTA SECTION
+========================================= */
+.cta-section {
+  margin-top: 72px;
+  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.cta-btn {
+  background: linear-gradient(135deg, var(--mint-deep) 0%, #38b2a8 100%);
+  color: white;
+  padding: 20px 56px;
+  border-radius: var(--radius-pill);
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:
+    0 6px 0px #3aada3,
+    0 12px 30px rgba(94,207,186,0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer sweep */
+.cta-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.3) 50%, transparent 65%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+.cta-btn:hover::after { transform: translateX(100%); }
+
+.cta-btn:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow:
+    0 8px 0px #3aada3,
+    0 20px 40px rgba(94,207,186,0.55);
+}
+.cta-btn:active {
+  transform: translateY(0px) scale(0.99);
+  box-shadow: 0 3px 0px #3aada3, 0 6px 16px rgba(94,207,186,0.3);
+}
+
+.cta-note {
+  font-size: 0.875rem;
+  color: var(--text-mid);
+  font-weight: 700;
+}
+
+/* =========================================
+   7. FOOTER WAVE + FOOTER
+========================================= */
+.footer-wave {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  margin-top: 20px;
+}
+.footer-wave svg {
+  display: block;
+  width: 100%; height: 80px;
+}
+
+.site-footer {
+  background: #2d3a4a;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  padding: 24px 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.site-footer span { color: var(--mint-deep); }
+
+/* =========================================
+   8. ANIMATIONS
+========================================= */
+.fade-in-page { animation: fadeIn 0.7s ease forwards; }
+
+.animate-slide-up {
+  opacity: 0;
+  transform: translateY(36px);
+  animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.delay-1 { animation-delay: 0.15s; }
+.delay-2 { animation-delay: 0.3s; }
+.delay-3 { animation-delay: 0.5s; }
+.delay-4 { animation-delay: 0.65s; }
+
+@keyframes slideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@keyframes floatIcon {
+  0%,100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes bounceDots {
+  0%,80%,100% { transform: scale(0); }
+  40%         { transform: scale(1); }
+}
+@keyframes drift {
+  0%   { transform: translate(0,0) scale(1); }
+  100% { transform: translate(20px, 30px) scale(1.05); }
+}
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* =========================================
+   9. RESPONSIVE
+========================================= */
+@media (max-width: 768px) {
+  .navbar { padding: 16px 24px; }
+  .hero-section { padding: 50px 20px 32px; }
+  .hero-section::before { display: none; }
+  .feature-card { width: 90%; max-width: 340px; }
+  .cta-btn { padding: 16px 40px; font-size: 1.15rem; }
+}

@@ -1,8 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
+
+  const openRoutineDashboard = (child) => {
+  navigate("/routine", {
+    state: { child }
+  });
+};
 
   // A quick way to test logging out
   const handleLogout = () => {

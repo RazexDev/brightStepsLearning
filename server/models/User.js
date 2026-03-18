@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// 🔒 TECH LEAD SECURITY: Encrypt password BEFORE saving to the database
+// SECURITY: Encrypt password BEFORE saving to the database
 userSchema.pre('save', async function () {
   // If the password wasn't modified, skip encryption
   if (!this.isModified('password')) {

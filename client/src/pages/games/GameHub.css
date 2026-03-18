@@ -1,0 +1,472 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --peach:        #f4956a;
+  --peach-light:  #fff0e8;
+  --peach-dark:   #d97846;
+  --sky:          #38bdf8;
+  --sky-light:    #e0f5ff;
+  --sky-dark:     #0ea5e9;
+  --green:        #4ade80;
+  --green-light:  #eafff1;
+  --green-dark:   #16a34a;
+  --yellow:       #fde047;
+  --purple:       #c084fc;
+  --pink:         #f9a8d4;
+  --mint:         #5ecfba;
+  --text-dark:    #1e293b;
+  --text-mid:     #4a6074;
+  --white:        #ffffff;
+  --radius-card:  28px;
+  --radius-pill:  999px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* =========================================
+   ROOT CONTAINER
+========================================= */
+.game-hub-container {
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text-dark);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================
+   ① HERO SECTION
+========================================= */
+.hub-hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 44px 40px 60px;
+  background:
+    radial-gradient(ellipse 900px 600px at 0%   0%,  #fde68a88 0%, transparent 55%),
+    radial-gradient(ellipse 700px 500px at 100% 0%,  #fbbf7488 0%, transparent 55%),
+    radial-gradient(ellipse 600px 400px at 50%  100%,#bae6fd66 0%, transparent 60%),
+    linear-gradient(160deg, #fff9f0 0%, #f0fbf8 50%, #e0f4ff 100%);
+  border-bottom: 3px dashed rgba(94,207,186,0.3);
+}
+
+/* floating emoji decorations */
+.hero-deco {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+  animation: floatDeco var(--dur, 6s) ease-in-out infinite var(--delay, 0s);
+  opacity: 0.72;
+  z-index: 0;
+}
+.deco-star1  { font-size: 2.4rem; top: 8%;  left: 4%;   --dur: 5s;   --delay: 0s; }
+.deco-star2  { font-size: 1.8rem; top: 18%; left: 88%;  --dur: 7s;   --delay: 1s; }
+.deco-star3  { font-size: 1.4rem; top: 72%; left: 93%;  --dur: 6s;   --delay: 2s; }
+.deco-cloud1 { font-size: 3rem;   top: 6%;  left: 56%;  --dur: 9s;   --delay: 0.5s; }
+.deco-cloud2 { font-size: 2.2rem; top: 68%; left: 8%;   --dur: 8s;   --delay: 1.5s; }
+.deco-rocket { font-size: 2.8rem; top: 58%; left: 86%;  --dur: 7s;   --delay: 0.8s; }
+.deco-rainbow{ font-size: 3rem;   top: 6%;  left: 22%;  --dur: 10s;  --delay: 0.3s; }
+.deco-balloon{ font-size: 2.6rem; top: 60%; left: 48%;  --dur: 8s;   --delay: 2.2s; }
+.deco-heart  { font-size: 1.8rem; top: 24%; left: 76%;  --dur: 6.5s; --delay: 1.8s; }
+.deco-music  { font-size: 1.8rem; top: 38%; left: 2%;   --dur: 8.5s; --delay: 0.4s; }
+
+/* ── Back button ── */
+.back-to-dash {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-mid);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 9px 20px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  border: 2px solid rgba(94,207,186,0.35);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 2;
+}
+.back-to-dash:hover {
+  color: var(--peach);
+  transform: translateX(-5px) scale(1.04);
+  border-color: var(--peach);
+  box-shadow: 0 4px 18px rgba(244,149,106,0.25);
+}
+
+/* ── Hero title ── */
+.hero-title-block {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.hero-emoji-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.hero-emoji-row span {
+  font-size: 2.2rem;
+  display: inline-block;
+  animation: bouncePop 2s ease-in-out infinite;
+}
+.hero-emoji-row span:nth-child(2) { animation-delay: 0.25s; }
+.hero-emoji-row span:nth-child(3) { animation-delay: 0.5s; }
+.hero-emoji-row span:nth-child(4) { animation-delay: 0.75s; }
+.hero-emoji-row span:nth-child(5) { animation-delay: 1s; }
+
+.hub-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.title-word {
+  display: inline-block;
+  padding: 4px 18px 8px;
+  border-radius: 18px;
+  margin: 0 5px;
+}
+.title-word.tw-orange { background: var(--peach-light);  color: var(--peach-dark); }
+.title-word.tw-sky    { background: var(--sky-light);    color: var(--sky-dark); }
+.title-word.tw-green  { background: var(--green-light);  color: var(--green-dark); }
+
+.hub-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-mid);
+  font-weight: 700;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* stat pills */
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  font-size: 0.88rem;
+  background: white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+  border: 2px solid transparent;
+}
+.stat-pill.sp-orange { border-color: var(--peach);  color: var(--peach-dark); }
+.stat-pill.sp-sky    { border-color: var(--sky);    color: var(--sky-dark); }
+.stat-pill.sp-green  { border-color: var(--green);  color: var(--green-dark); }
+
+/* =========================================
+   ② CARDS AREA
+========================================= */
+.cards-section {
+  flex: 1;
+  padding: 44px 32px 48px;
+  background: #f8fdfc;
+  background-image: radial-gradient(circle, #c7ede888 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.cards-heading {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.cards-heading h2 {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.cards-heading p {
+  color: var(--text-mid);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 6px;
+}
+
+.game-cards-wrapper {
+  max-width: 1060px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── Card ── */
+.game-menu-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0 28px;
+  background: var(--white);
+  border-radius: var(--radius-card);
+  padding: 28px 32px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+  border: 3px solid transparent;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.06), 0 14px 36px -8px rgba(0,0,0,0.08);
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: slideInCard 0.6s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+.game-menu-card:nth-child(1) { animation-delay: 0.05s; }
+.game-menu-card:nth-child(2) { animation-delay: 0.18s; }
+.game-menu-card:nth-child(3) { animation-delay: 0.31s; }
+
+.game-menu-card.match-game   { border-color:#ffe0cd; --accent:var(--peach);  --accent-dark:var(--peach-dark); --accent-bg:var(--peach-light); }
+.game-menu-card.shape-game   { border-color:#c8ecff; --accent:var(--sky);    --accent-dark:var(--sky-dark);   --accent-bg:var(--sky-light); }
+.game-menu-card.emotion-game { border-color:#c0f7d4; --accent:var(--green);  --accent-dark:var(--green-dark); --accent-bg:var(--green-light); }
+
+/* left coloured stripe */
+.game-menu-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 8px;
+  background: var(--accent);
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
+}
+
+/* ghost watermark emoji */
+.game-menu-card::after {
+  content: attr(data-emoji);
+  position: absolute;
+  right: 120px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 7rem;
+  opacity: 0.055;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.4s ease;
+  line-height: 1;
+}
+.game-menu-card:hover::after {
+  opacity: 0.1;
+  transform: translateY(-50%) scale(1.1) rotate(6deg);
+}
+
+.game-menu-card:hover {
+  transform: translateY(-9px) scale(1.01);
+  border-color: var(--accent);
+  box-shadow: 0 8px 0 rgba(0,0,0,0.07), 0 28px 56px -10px rgba(0,0,0,0.13);
+}
+
+/* icon column */
+.game-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.game-icon-large {
+  width: 90px; height: 90px;
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: var(--accent-bg);
+  position: relative;
+  z-index: 1;
+  transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.game-menu-card:hover .game-icon-large { transform: rotate(-8deg) scale(1.14); }
+
+.new-badge {
+  background: var(--yellow);
+  color: #92400e;
+  font-weight: 900;
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(253,224,71,0.5);
+  white-space: nowrap;
+}
+.new-badge.invisible { visibility: hidden; }
+
+/* info column */
+.game-info { position: relative; z-index: 1; }
+.game-info h2 {
+  font-family: 'Fredoka One', cursive;
+  color: var(--text-dark);
+  font-size: 1.65rem;
+  margin-bottom: 8px;
+}
+.game-info p {
+  color: var(--text-mid);
+  font-size: 1rem;
+  line-height: 1.55;
+  font-weight: 700;
+  margin-bottom: 14px;
+  max-width: 520px;
+}
+
+.game-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tag {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 13px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-bg);
+  color: var(--accent-dark);
+}
+
+.game-stars { display: flex; align-items: center; gap: 4px; }
+.star-icon { font-size: 1.1rem; opacity: 0.22; }
+.star-icon.lit { opacity: 1; }
+.stars-label { font-size: 0.8rem; font-weight: 800; color: var(--text-mid); margin-left: 6px; }
+
+/* play column */
+.play-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.play-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 92px; height: 92px;
+  border-radius: 50%;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  color: white;
+  background: var(--accent);
+  box-shadow: 0 7px 0 var(--accent-dark), 0 12px 28px rgba(0,0,0,0.15);
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.play-button::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.28) 0%, transparent 50%);
+  border-radius: 50%;
+}
+.play-btn-icon { font-size: 1.5rem; line-height: 1; }
+
+.game-menu-card:hover .play-button {
+  transform: scale(1.12) translateY(-4px);
+  box-shadow: 0 10px 0 var(--accent-dark), 0 20px 40px rgba(0,0,0,0.2);
+}
+.game-menu-card:active .play-button {
+  transform: scale(0.95) translateY(4px);
+  box-shadow: 0 3px 0 var(--accent-dark);
+}
+
+.players-label { font-size: 0.8rem; font-weight: 800; color: var(--text-mid); white-space: nowrap; }
+
+/* =========================================
+   ③ FOOTER ENCOURAGE ROW
+========================================= */
+.hub-footer-section {
+  padding: 0 32px 60px;
+  background: #f8fdfc;
+  background-image: radial-gradient(circle, #c7ede888 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.encourage-row {
+  max-width: 1060px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.encourage-card {
+  background: var(--white);
+  border-radius: var(--radius-card);
+  padding: 26px 28px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.04), 0 10px 24px -6px rgba(0,0,0,0.07);
+  border: 2px dashed rgba(94,207,186,0.45);
+  opacity: 0;
+  animation: slideInCard 0.6s 0.45s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+.encourage-card:nth-child(2) { animation-delay: 0.55s; }
+
+.ec-emoji { font-size: 2.8rem; flex-shrink: 0; animation: bouncePop 3s ease-in-out infinite; }
+.encourage-card:nth-child(2) .ec-emoji { animation-delay: 0.6s; }
+
+.ec-text h3 { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: var(--text-dark); margin-bottom: 5px; }
+.ec-text p  { font-size: 0.9rem; color: var(--text-mid); font-weight: 700; line-height: 1.5; }
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+@keyframes floatDeco {
+  0%,100% { transform: translate(0, 0)      rotate(0deg)   scale(1); }
+  30%      { transform: translate(8px,-14px) rotate(8deg)  scale(1.05); }
+  60%      { transform: translate(-6px, 8px) rotate(-5deg) scale(0.97); }
+}
+@keyframes bouncePop {
+  0%,100% { transform: scale(1)   rotate(-4deg); }
+  50%      { transform: scale(1.2) rotate( 4deg); }
+}
+@keyframes slideInCard {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+@media (max-width: 700px) {
+  .hub-hero { padding: 30px 20px 40px; }
+  .hub-title { font-size: 2.2rem; }
+  .title-word { padding: 3px 10px 6px; margin: 0 2px; }
+  .game-menu-card {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 14px 18px;
+    padding: 22px 18px;
+  }
+  .play-col {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: center;
+  }
+  .play-button {
+    width: 100%; height: 52px;
+    border-radius: var(--radius-pill);
+    flex-direction: row;
+    gap: 8px;
+  }
+  .encourage-row { grid-template-columns: 1fr; }
+  .game-menu-card::after { display: none; }
+  .deco-star2,.deco-cloud1,.deco-rocket,.deco-planet { display: none; }
+  .cards-section { padding: 32px 16px 36px; }
+  .hub-footer-section { padding: 0 16px 40px; }
+}

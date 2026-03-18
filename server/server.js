@@ -1,29 +1,32 @@
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
+
+// Import Routes
+const authRoutes = require('./routes/auth');
+const progressRoutes = require('./routes/progress'); // 👈 NEW: Progress routing
 
 const app = express();
 
 // Middleware
-app.use(express.json()); // Allows us to read JSON data from the frontend
-app.use(cors()); // Allows our React app (port 3000) to talk to this API
+app.use(cors());
+app.use(express.json());
 
-// Database Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas Cloud!'))
-  .catch((err) => console.error('❌ Database connection error:', err));
+// Connect to MongoDB Atlas
+// (Using family: 4 to prevent the Windows IPv6 ECONNREFUSED error for the team)
+mongoose.connect(process.env.MONGO_URI, {
+  family: 4 
+})
+.then(() => console.log('✅ Connected to MongoDB Atlas Cloud!'))
+.catch((err) => console.error('❌ Database connection error:', err));
 
-//API routes
-  app.use('/api/auth', require('./routes/auth'));
-
-// Basic Test Route
-app.get('/', (req, res) => {
-  res.send('BrightSteps API is running...');
-});
+// Route Middleware
+app.use('/api/auth', authRoutes);
+app.use('/api/progress', progressRoutes); // 👈 NEW: The receiver for the Game Hub
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

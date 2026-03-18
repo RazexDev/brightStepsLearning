@@ -1,0 +1,64 @@
+/* Bins */
+.drop-bin {
+  border: 4px dashed #dfe6e9;
+  border-radius: 16px;
+  min-height: 200px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s ease;
+  background-color: #fafbfc;
+}
+.drop-bin.highlight {
+  transform: scale(1.02);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+}
+.drop-bin.red { border-color: #ff7675; }
+.drop-bin.blue { border-color: #74b9ff; }
+.drop-bin.green { border-color: #55efc4; }
+
+.bin-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+/* Draggable Shapes */
+.draggable-item {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+.draggable-item:active {
+  box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+}
+
+/* Colors */
+.draggable-item.red { background-color: #ff7675; }
+.draggable-item.blue { background-color: #74b9ff; }
+.draggable-item.green { background-color: #55efc4; }
+
+/* Geometry */
+.draggable-item.circle { border-radius: 50%; }
+.draggable-item.square { border-radius: 12px; }
+.draggable-item.triangle {
+  background-color: transparent !important;
+  width: 0;
+  height: 0;
+  border-left: 35px solid transparent;
+  border-right: 35px solid transparent;
+  border-bottom: 60px solid;
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+.draggable-item.triangle.red { border-bottom-color: #ff7675; }
+.draggable-item.triangle.blue { border-bottom-color: #74b9ff; }
+.draggable-item.triangle.green { border-bottom-color: #55efc4; }

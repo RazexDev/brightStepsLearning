@@ -965,7 +965,7 @@ export default function RoutineDashboard() {
         </div>
       </div>
 
-      {/* ══ MODALS ══ */}
+      
       {activeRoutine && (
         <ChecklistModal
           routine={activeRoutine}

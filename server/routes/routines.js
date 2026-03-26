@@ -13,4 +13,4 @@ router.post("/", createRoutine);
 router.put("/:id", updateRoutine);
 router.delete("/:id", deleteRoutine);
 
-module.exports = router;
+module.exports = router ;

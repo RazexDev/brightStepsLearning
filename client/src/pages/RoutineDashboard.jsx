@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, X, Plus, Pencil, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Search, X, Plus, Pencil, Trash2, Download, GripVertical } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "./RoutineDashboard.css";
 
 /* ═══════════════════════════════════════════════════════
@@ -303,6 +304,19 @@ function RoutineFormModal({ initial, onSave, onClose }) {
     return !Object.keys(e).length;
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    if (source.index === destination.index) return;
+
+    setForm((f) => {
+      const newTasks = Array.from(f.tasks);
+      const [moved] = newTasks.splice(source.index, 1);
+      newTasks.splice(destination.index, 0, moved);
+      return { ...f, tasks: newTasks };
+    });
+  };
+
   const handleSave = () => {
     if (!validate()) return;
     const meta = getMeta(form.type, form.cls);
@@ -417,24 +431,46 @@ function RoutineFormModal({ initial, onSave, onClose }) {
 
           {/* Tasks */}
           <div className="rd-field">
-            <label className="rd-label">Tasks <span className="rd-required">*</span><span className="rd-hint"> — one per row</span></label>
+            <label className="rd-label">Tasks <span className="rd-required">*</span><span className="rd-hint"> — drag to reorder</span></label>
             {errors.tasks && <span className="rd-error-msg">{errors.tasks}</span>}
-            <div className="rd-task-builder">
-              {form.tasks.map((task, idx) => (
-                <div key={task.id} className="rd-task-build-row">
-                  <span className="rd-task-num">{idx + 1}</span>
-                  <input className="rd-input rd-task-label-input" placeholder="Task name"
-                    value={task.label} onChange={(e) => setTask(task.id, "label", e.target.value)} />
-                  <input className="rd-input rd-task-mins-input" type="number" min="0" placeholder="min"
-                    value={task.mins} onChange={(e) => setTask(task.id, "mins", e.target.value)} />
-                  <button type="button" className="rd-task-remove-btn"
-                    onClick={() => removeRow(task.id)} disabled={form.tasks.length === 1}><X size={13} /></button>
-                </div>
-              ))}
-              <button type="button" className="rd-add-task-row-btn" onClick={addRow}>
-                <Plus size={14} /> Add Task
-              </button>
-            </div>
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId="tasks-list">
+                {(provided) => (
+                  <div
+                    className="rd-task-builder"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {form.tasks.map((task, idx) => (
+                      <Draggable key={task.id.toString()} draggableId={task.id.toString()} index={idx}>
+                        {(provided, snapshot) => (
+                          <div
+                            className={`rd-task-build-row ${snapshot.isDragging ? 'dragging' : ''}`}
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                          >
+                            <div className="rd-task-drag-handle" {...provided.dragHandleProps}>
+                              <GripVertical size={16} />
+                            </div>
+                            <span className="rd-task-num">{idx + 1}</span>
+                            <input className="rd-input rd-task-label-input" placeholder="Task name"
+                              value={task.label} onChange={(e) => setTask(task.id, "label", e.target.value)} />
+                            <input className="rd-input rd-task-mins-input" type="number" min="0" placeholder="min"
+                              value={task.mins} onChange={(e) => setTask(task.id, "mins", e.target.value)} />
+                            <button type="button" className="rd-task-remove-btn"
+                              onClick={() => removeRow(task.id)} disabled={form.tasks.length === 1}><X size={13} /></button>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    <button type="button" className="rd-add-task-row-btn" onClick={addRow}>
+                      <Plus size={14} /> Add Task
+                    </button>
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         </div>
 
@@ -567,6 +603,19 @@ function ChecklistModal({ routine, onClose, totalStars, onStarEarned, onRoutineC
     if (updated.every((t) => t.done)) onRoutineComplete();
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    if (source.index === destination.index) return;
+
+    setTasks((prev) => {
+      const newTasks = Array.from(prev);
+      const [moved] = newTasks.splice(source.index, 1);
+      newTasks.splice(destination.index, 0, moved);
+      return newTasks;
+    });
+  };
+
   const addTask = () => {
     const label = newTask.trim();
     if (!label) return;
@@ -609,22 +658,46 @@ function ChecklistModal({ routine, onClose, totalStars, onStarEarned, onRoutineC
           <span className="rd-progress-label">{doneCount}/{tasks.length} · ⭐ {localStars}</span>
         </div>
 
-        <div className="rd-task-list">
-          {tasks.map((task) => (
-            <div key={task.id} className={`rd-task-row ${task.done ? "done" : ""}`}
-              onClick={() => !task.done && toggleTask(task.id)}>
-              <div className={`rd-tick ${task.done ? "checked" : ""}`}>{task.done && "✓"}</div>
-              <span className="rd-task-label">{task.label}</span>
-              {task.done && <span className="rd-task-star">⭐</span>}
-              {task.mins > 0 && !task.done && <span className="rd-task-mins">{task.mins}m</span>}
-              {!task.done && (
-                <button className="rd-remove" onClick={(e) => { e.stopPropagation(); removeTask(task.id); }}>
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="checklist-tasks">
+            {(provided) => (
+              <div
+                className="rd-task-list"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+                {tasks.map((task, idx) => (
+                  <Draggable key={task.id.toString()} draggableId={task.id.toString()} index={idx}>
+                    {(provided, snapshot) => (
+                      <div
+                        className={`rd-task-row ${task.done ? "done" : ""} ${snapshot.isDragging ? 'dragging' : ''}`}
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        onClick={() => !task.done && toggleTask(task.id)}
+                      >
+                        {!task.done && (
+                          <div className="rd-task-drag-handle" {...provided.dragHandleProps} onClick={e => e.stopPropagation()}>
+                            <GripVertical size={16} />
+                          </div>
+                        )}
+                        <div className={`rd-tick ${task.done ? "checked" : ""}`}>{task.done && "✓"}</div>
+                        <span className="rd-task-label">{task.label}</span>
+                        {task.done && <span className="rd-task-star">⭐</span>}
+                        {task.mins > 0 && !task.done && <span className="rd-task-mins">{task.mins}m</span>}
+                        {!task.done && (
+                          <button className="rd-remove" onClick={(e) => { e.stopPropagation(); removeTask(task.id); }}>
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
 
         <div className="rd-add-row">
           <input className="rd-add-input" placeholder="Add a task — it'll be saved to this routine…"
@@ -965,7 +1038,7 @@ export default function RoutineDashboard() {
         </div>
       </div>
 
-      
+
       {activeRoutine && (
         <ChecklistModal
           routine={activeRoutine}

@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const resourceRoutes = require('./routes/resourceRoutes');
 
 // Force Node.js to use public DNS servers (fixes your ECONNREFUSED SRV error)
 const dns = require('dns');
@@ -12,6 +13,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use('/api/resources', resourceRoutes);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {

@@ -45,7 +45,7 @@ export default function LandingPage() {
           BrightSteps
         </div>
         
-        {/* THIS IS THE LINK THAT ROUTES TO YOUR LOGIN PAGE */}
+        {/* We leave this one pointing to login */}
         <Link to="/login" className="login-btn">
           Teacher / Parent Login
         </Link>
@@ -102,9 +102,9 @@ export default function LandingPage() {
 
         {/* CTA */}
         <div className="cta-section animate-slide-up delay-4">
-          {/* THIS ALSO ROUTES TO YOUR LOGIN PAGE */}
-          <Link to="/login" className="cta-btn">
-            ✨ Get Started — It's Free
+          {/* UPDATED: This now routes to your new Resources Dashboard */}
+          <Link to="/manage-resources" className="cta-btn">
+            ✨ Explore Resources
           </Link>
           <p className="cta-note">No account needed to explore · Safe for all ages</p>
         </div>

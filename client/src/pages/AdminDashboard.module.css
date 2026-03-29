@@ -1,0 +1,316 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+/* ── Admin Design Tokens ── */
+:root {
+  --ad-bg:        #0F172A; /* Slate 900 */
+  --ad-surface:   #1E293B; /* Slate 800 */
+  --ad-surface-2: #334155; /* Slate 700 */
+  --ad-border:    #334155;
+  --ad-border-hi: #475569;
+  
+  --ad-text:      #F8FAFC; /* Slate 50 */
+  --ad-text-soft: #94A3B8; /* Slate 400 */
+  --ad-text-dim:  #64748B; /* Slate 500 */
+  
+  --ad-accent:    #6366F1; /* Indigo 500 */
+  --ad-accent-bg: #e0e7ff1a;
+  --ad-accent-hi: #818CF8;
+
+  --ad-danger:    #EF4444; /* Red 500 */
+  --ad-danger-bg: #fee2e21a;
+  --ad-danger-hi: #F87171;
+
+  --ad-radius:    12px;
+  --ad-shadow:    0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+}
+
+.wrapper {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--ad-bg);
+  min-height: 100vh;
+  color: var(--ad-text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══════════════ NAVBAR ══════════════ */
+.nav {
+  height: 64px;
+  background-color: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--ad-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.navBrand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+.navBadge {
+  background: var(--ad-accent);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.adminLabel {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--ad-text-soft);
+}
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--ad-border-hi);
+  color: var(--ad-text);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logoutBtn:hover {
+  background: var(--ad-surface-2);
+  border-color: var(--ad-text-dim);
+}
+
+/* ══════════════ MAIN CONTENT ══════════════ */
+.main {
+  flex: 1;
+  padding: 40px 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+}
+.pageHeader h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
+}
+.pageHeader p {
+  color: var(--ad-text-soft);
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* ══════════════ STATS GRID ══════════════ */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+.statCard {
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  padding: 24px;
+  box-shadow: var(--ad-shadow);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.statInfo h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ad-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 8px;
+}
+.statInfo p {
+  font-size: 2.25rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0;
+  color: var(--ad-text);
+}
+.statIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iconIndigo { background: rgba(99, 102, 241, 0.15); color: #818CF8; }
+.iconEmerald { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+.iconAmber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+
+/* ══════════════ TABLE SECTION ══════════════ */
+.tableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.tableHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ad-accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.refreshBtn:hover {
+  background: var(--ad-accent-hi);
+}
+
+.tableWrapper {
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  overflow-x: auto;
+  box-shadow: var(--ad-shadow);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.table th {
+  padding: 16px 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ad-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--ad-border);
+  background: rgba(15, 23, 42, 0.4);
+}
+.table td {
+  padding: 16px 20px;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--ad-border);
+  color: var(--ad-text);
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+.table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cellName {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--ad-surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ad-text-soft);
+}
+.cellEmail {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--ad-text-soft);
+}
+.cellDate {
+  font-size: 0.85rem;
+  color: var(--ad-text-dim);
+}
+
+/* ══════════════ ROLE BADGES ══════════════ */
+.roleBadge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.roleAdmin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.roleTeacher {
+  background: rgba(99, 102, 241, 0.15);
+  color: #A5B4FC;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+.roleParent {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6EE7B7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.roleStudent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FCD34D;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ══════════════ ACTION BUTTONS ══════════════ */
+.deleteBtn {
+  background: transparent;
+  color: var(--ad-text-dim);
+  border: 1px solid transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.deleteBtn:hover {
+  background: var(--ad-danger-bg);
+  color: var(--ad-danger-hi);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Loader */
+.loader {
+  text-align: center;
+  padding: 48px;
+  color: var(--ad-text-dim);
+  font-weight: 500;
+}

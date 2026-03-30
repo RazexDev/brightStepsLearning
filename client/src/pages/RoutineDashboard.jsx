@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, X, Plus, Pencil, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Search, X, Plus, Pencil, Trash2, Download, GripVertical } from "lucide-react";
 import "./RoutineDashboard.css";
 
 /* ═══════════════════════════════════════════════════════
@@ -292,6 +292,8 @@ function RoutineFormModal({ initial, onSave, onClose }) {
     };
   });
   const [errors, setErrors] = useState({});
+  const [draggedTask, setDraggedTask] = useState(null);
+  const [dragOverTask, setDragOverTask] = useState(null);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const setTask = (id, k, v) => setForm((f) => ({ ...f, tasks: f.tasks.map((t) => t.id === id ? { ...t, [k]: v } : t) }));
@@ -305,6 +307,40 @@ function RoutineFormModal({ initial, onSave, onClose }) {
     if (!form.tasks.some((t) => t.label.trim())) e.tasks = "Add at least one task.";
     setErrors(e);
     return !Object.keys(e).length;
+  };
+
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index);
+    setDraggedTask(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverTask !== index) {
+      setDragOverTask(index);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    const sourceIndex = draggedTask;
+    if (sourceIndex === null || sourceIndex === targetIndex) return;
+
+    setForm((f) => {
+      const newTasks = Array.from(f.tasks);
+      const [moved] = newTasks.splice(sourceIndex, 1);
+      newTasks.splice(targetIndex, 0, moved);
+      return { ...f, tasks: newTasks };
+    });
+    setDraggedTask(null);
+    setDragOverTask(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTask(null);
+    setDragOverTask(null);
   };
 
   const handleSave = () => {
@@ -421,11 +457,22 @@ function RoutineFormModal({ initial, onSave, onClose }) {
 
           {/* Tasks */}
           <div className="rd-field">
-            <label className="rd-label">Tasks <span className="rd-required">*</span><span className="rd-hint"> — one per row</span></label>
+            <label className="rd-label">Tasks <span className="rd-required">*</span><span className="rd-hint"> — drag to reorder</span></label>
             {errors.tasks && <span className="rd-error-msg">{errors.tasks}</span>}
             <div className="rd-task-builder">
               {form.tasks.map((task, idx) => (
-                <div key={task.id} className="rd-task-build-row">
+                <div
+                  key={task.id}
+                  className={`rd-task-build-row ${draggedTask === idx ? 'dragging' : ''} ${dragOverTask === idx ? 'drag-over' : ''}`}
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="rd-task-drag-handle">
+                    <GripVertical size={16} />
+                  </div>
                   <span className="rd-task-num">{idx + 1}</span>
                   <input className="rd-input rd-task-label-input" placeholder="Task name"
                     value={task.label} onChange={(e) => setTask(task.id, "label", e.target.value)} />
@@ -558,6 +605,8 @@ function ChecklistModal({ routine, onClose, totalStars, onStarEarned, onRoutineC
   const [newTask, setNewTask] = useState("");
   const [reward, setReward] = useState(null);
   const [localStars, setLocalStars] = useState(totalStars);
+  const [draggedTask, setDraggedTask] = useState(null);
+  const [dragOverTask, setDragOverTask] = useState(null);
 
   const toggleTask = (id) => {
     const task = tasks.find((t) => t.id === id);
@@ -569,6 +618,51 @@ function ChecklistModal({ routine, onClose, totalStars, onStarEarned, onRoutineC
     onStarEarned(1);
     setReward({ label: task.label, stars: newTotal });
     if (updated.every((t) => t.done)) onRoutineComplete();
+  };
+
+  const handleDragStart = (e, index) => {
+    const task = tasks[index];
+    if (task.done) {
+      e.preventDefault();
+      return false;
+    }
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index);
+    setDraggedTask(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverTask !== index) {
+      setDragOverTask(index);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    const sourceIndex = draggedTask;
+    if (sourceIndex === null || sourceIndex === targetIndex) return;
+
+    const sourceTask = tasks[sourceIndex];
+    const targetTask = tasks[targetIndex];
+    
+    // Don't allow dropping if either task is done
+    if (sourceTask.done || targetTask.done) return;
+
+    setTasks((prev) => {
+      const newTasks = Array.from(prev);
+      const [moved] = newTasks.splice(sourceIndex, 1);
+      newTasks.splice(targetIndex, 0, moved);
+      return newTasks;
+    });
+    setDraggedTask(null);
+    setDragOverTask(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTask(null);
+    setDragOverTask(null);
   };
 
   const addTask = () => {
@@ -614,11 +708,25 @@ function ChecklistModal({ routine, onClose, totalStars, onStarEarned, onRoutineC
         </div>
 
         <div className="rd-task-list">
-          {tasks.map((task) => (
-            <div key={task.id} className={`rd-task-row ${task.done ? "done" : ""}`}
-              onClick={() => !task.done && toggleTask(task.id)}>
-              <div className={`rd-tick ${task.done ? "checked" : ""}`}>{task.done && "✓"}</div>
-              <span className="rd-task-label">{task.label}</span>
+          {tasks.map((task, idx) => (
+            <div
+              key={task.id}
+              className={`rd-task-row ${task.done ? "done" : ""} ${draggedTask === idx ? 'dragging' : ''} ${dragOverTask === idx ? 'drag-over' : ''}`}
+              draggable={!task.done}
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+            >
+              {!task.done && (
+                <div className="rd-task-drag-handle">
+                  <GripVertical size={16} />
+                </div>
+              )}
+              <div className={`rd-tick ${task.done ? "checked" : ""}`} onClick={() => !task.done && toggleTask(task.id)}>
+                {task.done && "✓"}
+              </div>
+              <span className="rd-task-label" onClick={() => !task.done && toggleTask(task.id)}>{task.label}</span>
               {task.done && <span className="rd-task-star">⭐</span>}
               {task.mins > 0 && !task.done && <span className="rd-task-mins">{task.mins}m</span>}
               {!task.done && (

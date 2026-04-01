@@ -20,6 +20,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import s from './TeacherDashboard.module.css';
 import { downloadSingleReportPDF } from '../utils/pdfGenerator';
+import html2canvas from 'html2canvas';
 
 /* ── API helpers ─────────────────────────────────── */
 const API = 'http://localhost:5001/api';
@@ -689,6 +690,7 @@ function AnalyticsTab() {
   const [compData, setCompData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dateError, setDateError] = useState(null);
 
   // Fetch main analytics data
   const fetchAnalytics = async (period, start, end, student) => {
@@ -728,11 +730,21 @@ function AnalyticsTab() {
   };
 
   useEffect(() => {
+    // Validate bounds: Start >= 2026, End <= Today
+    const startYear = new Date(dateRange.startDate).getFullYear();
+    const TODAY = new Date().toISOString().split('T')[0];
+    
+    if (startYear < 2026 || dateRange.endDate > TODAY) {
+      setDateError("⚠️ Invalid date range. Start year must be 2026 or later, and End Date cannot exceed today.");
+      return; 
+    }
+    setDateError(null);
     loadData();
   }, [reportType, dateRange, selectedStudent]); // eslint-disable-line
 
   useEffect(() => {
     setDateRange(getPeriodDefaults(reportType));
+    setDateError(null);
   }, [reportType]);
 
   const resetFilters = () => {
@@ -741,8 +753,38 @@ function AnalyticsTab() {
     setDateRange(getPeriodDefaults('weekly'));
   };
 
-  const exportAnalyticsPDF = () => {
+  const addChartToDoc = (doc, dataUrl, title) => {
+    if (!dataUrl) return;
+    doc.addPage();
+    let y = 20;
+    doc.setFontSize(16); doc.setTextColor(61, 181, 160);
+    doc.text(title, 14, y);
+    y += 10;
+    
+    // Scale image correctly based on A4 width limits
+    const imgProps = doc.getImageProperties(dataUrl);
+    const pdfWidth = 180;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    doc.addImage(dataUrl, 'PNG', 15, y, pdfWidth, pdfHeight);
+  };
+
+  const exportAnalyticsPDF = async () => {
     if (!data) return;
+
+    // ── 1. Capture visual graph rows via html2canvas ──
+    let img1 = null, img2 = null, img3 = null;
+    try {
+      const el1 = document.getElementById('charts-row-1');
+      const el2 = document.getElementById('charts-row-2');
+      const el3 = document.getElementById('charts-row-3');
+      const opts = { scale: 1.5, backgroundColor: '#fafffe' }; // match dash bg
+      
+      if (el1) img1 = (await html2canvas(el1, opts)).toDataURL('image/png');
+      if (el2) img2 = (await html2canvas(el2, opts)).toDataURL('image/png');
+      if (el3) img3 = (await html2canvas(el3, opts)).toDataURL('image/png');
+    } catch(e) { console.error('Error capturing charts', e); }
+
+    // ── 2. Generate original data PDF ──
     const doc = new jsPDF();
     let currentY = 20;
     doc.setFontSize(20); doc.setTextColor(61, 181, 160);
@@ -769,6 +811,12 @@ function AnalyticsTab() {
     if (data.leaderboard.length) {
       autoTable(doc, { startY: currentY, head: [['Rank', 'Student', 'Game', 'Stars', 'Time(s)', 'Moves']], body: data.leaderboard.map(r => [r.rank, r.studentName, r.gameName, r.stars, r.completionTime, r.totalMoves]), headStyles: { fillColor: [242, 181, 58] }, alternateRowStyles: { fillColor: [255, 252, 240] } });
     }
+
+    // ── 3. Append Graph Appendices ──
+    addChartToDoc(doc, img1, 'Appendix I: Student Report Activity Graphs');
+    addChartToDoc(doc, img2, 'Appendix II: Resource & Targets Graphs');
+    addChartToDoc(doc, img3, 'Appendix III: Educational Game Progress Graphs');
+
     doc.save(`teacher_${data.period}_analytics_report.pdf`);
   };
 
@@ -783,12 +831,13 @@ function AnalyticsTab() {
   const { summary, reportsByStudent, dailyActivity, moodDistribution, resourceTypeBreakdown, resourceSkillBreakdown, resourceList, levelDistribution, gameTimeData, gamePerformance, leaderboard, students } = data;
 
   const summaryCards = [
-    { icon: '👥', label: 'Total Students', value: summary.totalStudents },
-    { icon: '🟢', label: 'Active This Period', value: summary.activeStudentsInPeriod },
-    { icon: '📋', label: 'Total Reports', value: summary.totalReports },
-    { icon: '🎯', label: 'Unique Activities', value: summary.totalActivities },
-    { icon: '📚', label: 'Resources Shared', value: summary.totalResources },
-    { icon: '🎮', label: 'Game Play Time', value: `${summary.totalGamePlayTime}s` },
+    { icon: '👥', label: 'Total Students',     value: summary.totalStudents },
+    { icon: '🟢', label: 'Active This Period',  value: summary.activeStudentsInPeriod },
+    { icon: '📋', label: 'Total Reports',       value: summary.totalReports },
+    { icon: '🎯', label: 'Unique Activities',   value: summary.totalActivities },
+    { icon: '📚', label: 'Resources Shared',    value: summary.totalResources },
+    { icon: '🎮', label: 'Game Plays',          value: summary.totalGamePlays ?? 0 },
+    { icon: '⏱️', label: 'Game Play Time',      value: `${summary.totalGamePlayTime}s` },
   ];
 
   return (
@@ -827,13 +876,19 @@ function AnalyticsTab() {
           </div>
           <div className={s.analyticsFilterGroup}>
             <label>Start Date</label>
-            <input className={s.formInput} type="date" value={dateRange.startDate} onChange={e => setDateRange(p => ({ ...p, startDate: e.target.value }))} />
+            <input className={s.formInput} type="date" min="2026-01-01" max={new Date().toISOString().split('T')[0]} value={dateRange.startDate} onChange={e => setDateRange(p => ({ ...p, startDate: e.target.value }))} />
           </div>
           <div className={s.analyticsFilterGroup}>
             <label>End Date</label>
-            <input className={s.formInput} type="date" value={dateRange.endDate} onChange={e => setDateRange(p => ({ ...p, endDate: e.target.value }))} />
+            <input className={s.formInput} type="date" min="2026-01-01" max={new Date().toISOString().split('T')[0]} value={dateRange.endDate} onChange={e => setDateRange(p => ({ ...p, endDate: e.target.value }))} />
           </div>
         </div>
+        
+        {dateError && (
+          <div style={{ color: '#E85C45', background: '#FDEAE6', border: '1px solid #eba498', padding: '12px 16px', borderRadius: '12px', marginTop: '20px', fontWeight: 'bold' }}>
+            {dateError}
+          </div>
+        )}
       </div>
 
       {/* ── Summary Cards ── */}
@@ -853,7 +908,7 @@ function AnalyticsTab() {
           <h3>1. Student Report Activity</h3>
           <span className={s.statBox}>{summary.totalReports} Reports · {summary.activeStudentsInPeriod} Students</span>
         </div>
-        <div className={s.analyticsChartsRow}>
+        <div id="charts-row-1" className={s.analyticsChartsRow}>
           <div className={s.analyticsChartCard}>
             <h4>Daily Report Trend</h4>
             <div className={s.chartWrap}>
@@ -872,16 +927,23 @@ function AnalyticsTab() {
           <div className={s.analyticsChartCard}>
             <h4>Mood Distribution</h4>
             <div className={s.chartWrap}>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={moodDistribution} dataKey="value" nameKey="name" outerRadius={90} label>
-                    {moodDistribution.map((entry, index) => (
-                      <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value, name) => [`${value} reports`, `${MOOD_EMOJI_MAP[name] || ''} ${name}`]} /><Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {moodDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={moodDistribution} dataKey="value" nameKey="name" outerRadius={90} label>
+                      {moodDistribution.map((entry, index) => (
+                        <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value, name) => [`${value} reports`, `${MOOD_EMOJI_MAP[name] || ''} ${name}`]} /><Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{height:300,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--td-ink-soft)',gap:'8px'}}>
+                  <span style={{fontSize:'2rem'}}>😐</span>
+                  <p style={{margin:0,fontSize:'0.85rem'}}>No mood data — teacher reports needed</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -903,7 +965,7 @@ function AnalyticsTab() {
           <h3>2. Resource & Recommendation Activity</h3>
           <span className={s.statBox}>{summary.totalResources} Resources Shared</span>
         </div>
-        <div className={s.analyticsChartsRow}>
+        <div id="charts-row-2" className={s.analyticsChartsRow}>
           <div className={s.analyticsChartCard}>
             <h4>Resources by Type</h4>
             <div className={s.chartWrap}>
@@ -948,60 +1010,109 @@ function AnalyticsTab() {
       <div className={s.analyticsBlock}>
         <div className={s.analyticsBlockHead}>
           <h3>3. Educational Games Analytics</h3>
-          <span className={s.statBox}>{summary.totalGamePlayTime}s Total Play Time</span>
+          <span className={s.statBox}>{summary.totalGamePlays ?? 0} Plays · {summary.totalGamePlayTime}s Play Time</span>
         </div>
-        <div className={s.analyticsChartsRow3}>
+        <div id="charts-row-3" className={s.analyticsChartsRow3}>
           <div className={s.analyticsChartCard}>
             <h4>Performance Distribution</h4>
             <div className={s.chartWrap}>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie data={levelDistribution} dataKey="value" nameKey="name" outerRadius={80} label>
-                    {levelDistribution.map((entry, index) => (
-                      <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip /><Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {levelDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={levelDistribution} dataKey="value" nameKey="name" outerRadius={80} label>
+                      {levelDistribution.map((entry, index) => (
+                        <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip /><Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{height:260,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--td-ink-soft)',gap:'8px'}}>
+                  <span style={{fontSize:'2rem'}}>🎮</span>
+                  <p style={{margin:0,fontSize:'0.85rem'}}>No game plays in this period</p>
+                </div>
+              )}
             </div>
           </div>
           <div className={s.analyticsChartCard}>
             <h4>Time Spent per Game</h4>
             <div className={s.chartWrap}>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={gameTimeData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip />
-                  <Bar dataKey="total" fill="#5EAD6E" name="Seconds" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {gameTimeData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={gameTimeData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip />
+                    <Bar dataKey="total" fill="#5EAD6E" name="Seconds" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{height:260,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--td-ink-soft)',gap:'8px'}}>
+                  <span style={{fontSize:'2rem'}}>⏱️</span>
+                  <p style={{margin:0,fontSize:'0.85rem'}}>No time data in this period</p>
+                </div>
+              )}
             </div>
           </div>
           <div className={s.analyticsChartCard}>
-            <h4>Plays & Moves per Game</h4>
+            <h4>Plays &amp; Moves per Game</h4>
             <div className={s.chartWrap}>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={gamePerformance}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
-                  <Bar dataKey="plays" fill="#E85C45" name="Plays" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="totalMoves" fill="#9C80D2" name="Total Moves" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {gamePerformance.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={gamePerformance}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
+                    <Bar dataKey="plays" fill="#E85C45" name="Plays" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="totalMoves" fill="#9C80D2" name="Total Moves" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{height:260,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--td-ink-soft)',gap:'8px'}}>
+                  <span style={{fontSize:'2rem'}}>📊</span>
+                  <p style={{margin:0,fontSize:'0.85rem'}}>No play data in this period</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+        {/* Game Performance Summary Table */}
         <div className={s.analyticsTableScroll}>
           <table className={s.analyticsTable}>
-            <thead><tr><th>Rank</th><th>Student</th><th>Game</th><th>Stars</th><th>Time</th><th>Moves</th><th>Date</th></tr></thead>
+            <thead><tr><th>Game</th><th>Total Plays</th><th>Total Moves</th><th>Total Stars</th><th>Avg Stars / Play</th></tr></thead>
             <tbody>
-              {leaderboard.length ? leaderboard.map(row => (
-                <tr key={`${row.rank}-${row.gameName}`}><td>#{row.rank}</td><td>{row.studentName}</td><td>{row.gameName}</td><td>{'⭐'.repeat(row.stars)}</td><td>{row.completionTime}s</td><td>{row.totalMoves}</td><td>{new Date(row.date).toLocaleDateString()}</td></tr>
-              )) : <tr><td colSpan="7" style={{textAlign:'center',padding:'20px',color:'var(--td-ink-soft)'}}>No game data for this period.</td></tr>}
+              {gamePerformance.length ? gamePerformance.map(row => (
+                <tr key={row.name}>
+                  <td>{row.name}</td>
+                  <td>{row.plays}</td>
+                  <td>{row.totalMoves}</td>
+                  <td>{'⭐'.repeat(Math.min(row.totalStars, 10))}{row.totalStars > 10 ? ` (${row.totalStars})` : ''}</td>
+                  <td>{row.plays > 0 ? (row.totalStars / row.plays).toFixed(1) : '—'}</td>
+                </tr>
+              )) : <tr><td colSpan="5" style={{textAlign:'center',padding:'20px',color:'var(--td-ink-soft)'}}>No game data for this period.</td></tr>}
             </tbody>
           </table>
         </div>
+
+        {/* Top 5 Leaderboard — shown only when data exists */}
+        {leaderboard.length > 0 && (
+          <>
+            <div style={{marginTop:'16px',fontWeight:600,color:'var(--td-ink)',fontSize:'0.95rem',padding:'0 4px'}}>🏆 Top Plays Leaderboard</div>
+            <div className={s.analyticsTableScroll} style={{marginTop:'8px'}}>
+              <table className={s.analyticsTable}>
+                <thead><tr><th>Rank</th><th>Student</th><th>Game</th><th>Stars</th><th>Time</th><th>Moves</th><th>Date</th></tr></thead>
+                <tbody>
+                  {leaderboard.map(row => (
+                    <tr key={`${row.rank}-${row.gameName}`}>
+                      <td>#{row.rank}</td><td>{row.studentName}</td><td>{row.gameName}</td>
+                      <td>{'⭐'.repeat(row.stars)}</td><td>{row.completionTime}s</td>
+                      <td>{row.totalMoves}</td><td>{new Date(row.date).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Section 4: Weekly vs Monthly Comparison ── */}

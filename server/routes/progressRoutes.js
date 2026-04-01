@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Progress = require('../models/Progress');
 
-// GET — fetch reports (supports ?studentName= filter)
+// GET — fetch reports (supports ?studentName= filter for teachers)
 router.get('/', async (req, res) => {
   try {
     const filter = {};
@@ -14,9 +14,39 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST — manual report creation
+// GET — fetch all game stats explicitly by childId for the GameHub
+router.get('/:childId', async (req, res) => {
+  try {
+    const stats = await Progress.find({ childId: req.params.childId }).sort({ date: -1 });
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error fetching game progress' });
+  }
+});
+
+// POST — progress saver (handles BOTH manual teacher reports and game telemetry)
 router.post('/', async (req, res) => {
   try {
+    if (req.body.childId) {
+      // ── GAME SAVE FLOW ──
+      // Games only send telemetry fields, without studentName/mood.
+      // The Progress schema is conditionally configured to accept this.
+      const { childId, gameName, score, stars, levelPlayed, completionTime, totalMoves, date } = req.body;
+      const gameReport = new Progress({
+        childId,
+        gameName,
+        score,
+        stars,
+        levelPlayed,
+        completionTime,
+        totalMoves,
+        date: date || new Date()
+      });
+      const savedReport = await gameReport.save();
+      return res.status(201).json(savedReport);
+    }
+    
+    // ── TEACHER MANUAL REPORT FLOW ──
     const { studentName, date, activity, mood, notes, avatar, stars, totalMoves, completionTime, gameName } = req.body;
     const newReport = new Progress({ studentName, date, activity, mood, notes, avatar, stars, totalMoves, completionTime, gameName });
     const savedReport = await newReport.save();

@@ -818,9 +818,31 @@ export default function RoutineDashboard() {
   const [activeTab, setActiveTab] = useState("adhd");
   const [searchQuery, setSearchQuery] = useState("");
 
-  /* ── Progress ── */
-  const [totalStars, setTotalStars] = useState(0);
-  const [completedRoutines, setCompletedRoutines] = useState(0);
+  /* ── Progress & Gamification (Persisted Locally) ── */
+  const [totalStars, setTotalStars] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('brightsteps_user'));
+      const uid = u?._id || u?.user?.id || 'guest';
+      return parseInt(localStorage.getItem(`br_stars_${uid}`)) || 0;
+    } catch { return 0; }
+  });
+  const [completedRoutines, setCompletedRoutines] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('brightsteps_user'));
+      const uid = u?._id || u?.user?.id || 'guest';
+      return parseInt(localStorage.getItem(`br_routines_${uid}`)) || 0;
+    } catch { return 0; }
+  });
+
+  /* Sync stars to localStorage on change */
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('brightsteps_user'));
+      const uid = u?._id || u?.user?.id || 'guest';
+      localStorage.setItem(`br_stars_${uid}`, totalStars.toString());
+      localStorage.setItem(`br_routines_${uid}`, completedRoutines.toString());
+    } catch { /* ignore parse error */ }
+  }, [totalStars, completedRoutines]);
 
   /* ── Modal visibility ── */
   const [activeRoutine, setActiveRoutine] = useState(null);

@@ -7,6 +7,7 @@ import axios from 'axios';
 import { Volume2, PlayCircle, FileText, ExternalLink, LogOut, Sparkles, Download, RefreshCcw, Lock, X, Eye, EyeOff } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { downloadSingleReportPDF } from '../utils/pdfGenerator';
 import './ResourceManager.css';
 import './Dashboard.css'; 
 
@@ -49,24 +50,7 @@ export default function LearningHub() {
   };
 
   const downloadPDF = (report) => {
-    const doc = new jsPDF();
-    doc.setFontSize(22);
-    doc.setTextColor(56, 189, 248);
-    doc.text('BrightSteps — My Progress Report', 20, 22);
-    autoTable(doc, {
-      startY: 34,
-      head: [['Category', 'Details']],
-      body: [
-        ['Student',  report.studentName],
-        ['Date',     new Date(report.date).toLocaleDateString()],
-        ['Activity', report.activity || '-'],
-        ['Mood',     report.mood || '-'],
-        ['Notes',    report.notes || '-'],
-      ],
-      headStyles: { fillColor: [94, 207, 186] },
-      alternateRowStyles: { fillColor: [240, 253, 250] },
-    });
-    doc.save(`${report.studentName}_Report.pdf`);
+    downloadSingleReportPDF(report, 'My BrightSteps Progress Report');
   };
 
   useEffect(() => {

@@ -2,21 +2,34 @@ const mongoose = require('mongoose');
 
 const ProgressSchema = new mongoose.Schema(
   {
-    studentName:    { type: String, required: true, trim: true },
-    date:           { type: Date, required: true },
-    activity:       { type: String, required: true, trim: true },
+    // ── Teacher Report Fields ──
+    studentName: { 
+      type: String, 
+      required: function() { return !this.childId; }, 
+      trim: true 
+    },
+    date: { type: Date, required: true },
+    activity: { 
+      type: String, 
+      required: function() { return !this.childId; }, 
+      trim: true 
+    },
     mood: {
       type: String,
-      required: true,
+      required: function() { return !this.childId; },
       enum: ['Happy', 'Neutral', 'Frustrated', 'Excited', 'Tired'],
     },
-    notes:          { type: String, default: '', trim: true },
-    avatar:         { type: String, default: '👧' },
-    // Game-performance fields (added for auto-generation)
+    notes:  { type: String, default: '', trim: true },
+    avatar: { type: String, default: '👧' },
+
+    // ── Game Telemetry Fields ──
+    childId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    gameName:       { type: String, default: '' },
     stars:          { type: Number, default: 0 },
     totalMoves:     { type: Number, default: 0 },
     completionTime: { type: Number, default: 0 }, // seconds
-    gameName:       { type: String, default: '' },
+    score:          { type: Number, default: 0 },
+    levelPlayed:    { type: Number, default: 1 },
   },
   { timestamps: true }
 );

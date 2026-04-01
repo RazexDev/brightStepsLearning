@@ -521,3 +521,47 @@
 .chatSendBtn:hover {
   background: var(--pd-teal-dk); transform: scale(1.05);
 }
+
+/* ══════════════ PARENT REPORT SUMMARY BANNER ══════════════ */
+.progressSummaryBanner {
+  background: white; border-radius: var(--pd-r-card);
+  border: 2px solid rgba(30,16,7,0.06);
+  padding: 24px; margin-bottom: 24px;
+  box-shadow: var(--pd-sh);
+  display: flex; gap: 24px; align-items: center;
+  flex-wrap: wrap;
+}
+.psbAvatarArea {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.psbAvatar {
+  font-size: 3.5rem; background: var(--pd-rose-bg);
+  height: 80px; width: 80px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.psbName {
+  font-family: 'Baloo 2', cursive; font-size: 1.1rem;
+  font-weight: 700; color: var(--pd-ink); margin: 0;
+}
+.psbDetails {
+  flex: 1;
+}
+.psbDetails h3 {
+  font-family: 'Baloo 2', cursive; font-size: 1.4rem;
+  font-weight: 800; color: var(--pd-ink); margin: 0 0 12px;
+}
+.psbMetaRow {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.psbPill {
+  background: var(--pd-paper); border: 1.5px solid rgba(30,16,7,0.08);
+  padding: 6px 14px; border-radius: var(--pd-r-pill);
+  font-size: 0.85rem; font-weight: 800; color: var(--pd-ink-mid);
+}
+.psbPill.sky { background: var(--pd-sky-bg); border-color: var(--pd-sky); color: var(--pd-sky-dk); }
+.psbPill.sage { background: var(--pd-sage-bg); border-color: var(--pd-sage); color: var(--pd-sage); }
+.psbPill.amber { background: var(--pd-amber-bg); border-color: var(--pd-amber); color: var(--pd-amber-dk); }
+.psbDesc {
+  font-size: 0.9rem; font-weight: 700; color: var(--pd-ink-soft);
+  margin: 0; line-height: 1.5;
+}

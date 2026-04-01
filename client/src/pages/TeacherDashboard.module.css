@@ -1131,3 +1131,257 @@
   margin-top: 16px;
   font-size: 1.1rem;
 }
+
+/* ════════════════════════════════════════════
+   ANALYTICS TAB (extracted from feature-reports)
+════════════════════════════════════════════ */
+
+/* ── Filters card ── */
+.analyticsFiltersCard {
+  background: white;
+  border-radius: var(--td-r-card);
+  border: 2px solid rgba(30, 16, 7, 0.07);
+  border-bottom: 5px solid var(--td-sky);
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  box-shadow: var(--td-sh-card);
+}
+
+.analyticsFiltersHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.analyticsFiltersLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--td-ink);
+}
+
+.analyticsFiltersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.analyticsFilterGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.analyticsFilterGroup label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--td-ink-mid);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Summary cards grid ── */
+.analyticsSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.analyticsSummaryCard {
+  background: white;
+  border-radius: var(--td-r-card);
+  border: 2px solid rgba(30, 16, 7, 0.06);
+  padding: 22px 18px;
+  text-align: center;
+  box-shadow: var(--td-sh-card);
+  transition: transform 0.18s;
+}
+
+.analyticsSummaryCard:hover {
+  transform: translateY(-3px);
+}
+
+.analyticsSummaryIcon {
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+}
+
+.analyticsSummaryValue {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--td-ink);
+  line-height: 1.2;
+}
+
+.analyticsSummaryLabel {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--td-ink-soft);
+  margin-top: 2px;
+}
+
+/* ── Analytics section blocks ── */
+.analyticsBlock {
+  background: white;
+  border-radius: var(--td-r-card);
+  border: 2px solid rgba(30, 16, 7, 0.06);
+  padding: 28px;
+  margin-bottom: 28px;
+  box-shadow: var(--td-sh-card);
+}
+
+.analyticsBlockHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.analyticsBlockHead h3 {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--td-ink);
+  margin: 0;
+}
+
+/* ── Chart cards ── */
+.analyticsChartCard {
+  background: var(--td-paper);
+  border-radius: 16px;
+  border: 1.5px solid rgba(30, 16, 7, 0.06);
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.analyticsChartCard h4 {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--td-ink-mid);
+  margin: 0 0 14px;
+}
+
+.chartWrap {
+  width: 100%;
+  min-height: 200px;
+}
+
+/* ── Chart row layouts ── */
+.analyticsChartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.analyticsChartsRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+}
+
+/* ── Data tables ── */
+.analyticsTableScroll {
+  overflow-x: auto;
+  margin-top: 18px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(30, 16, 7, 0.06);
+}
+
+.analyticsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.analyticsTable thead {
+  background: var(--td-teal);
+  color: white;
+}
+
+.analyticsTable th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.analyticsTable td {
+  padding: 11px 16px;
+  color: var(--td-ink);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(30, 16, 7, 0.05);
+}
+
+.analyticsTable tbody tr:nth-child(even) {
+  background: var(--td-paper);
+}
+
+.analyticsTable tbody tr:hover {
+  background: var(--td-teal-bg);
+}
+
+/* ── View status badges ── */
+.viewBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--td-r-pill);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.viewBadgeViewed {
+  background: var(--td-sage-bg);
+  color: var(--td-sage);
+}
+
+.viewBadgeNot {
+  background: var(--td-amber-bg);
+  color: var(--td-amber-dk);
+}
+
+/* ── Analytics responsive ── */
+@media (max-width: 900px) {
+  .analyticsChartsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .analyticsChartsRow3 {
+    grid-template-columns: 1fr;
+  }
+
+  .analyticsSummaryGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .analyticsFiltersGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .analyticsSummaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .analyticsBlock {
+    padding: 18px;
+  }
+
+  .analyticsChartCard {
+    padding: 14px;
+  }
+}

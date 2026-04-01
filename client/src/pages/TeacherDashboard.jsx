@@ -1,19 +1,25 @@
 /**
  * TeacherDashboard.jsx
- * Professional 3-tab interface: My Students | Progress Reports | Resource Library
+ * Professional 5-tab interface: My Students | Progress Reports | Resource Library | Messages | Analytics
  * Theme matches the BrightSteps Landing Page (paper/ink/rose/amber/teal palette).
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Users, ClipboardList, BookOpen,
   RefreshCcw, LogOut, Download, Trash2,
   ExternalLink, Save, PlusCircle,
-  MessageSquare, Send
+  MessageSquare, Send, BarChart3, Filter, FileText
 } from 'lucide-react';
+import {
+  ResponsiveContainer, LineChart, Line, CartesianGrid,
+  XAxis, YAxis, Tooltip, Legend, BarChart, Bar,
+  PieChart, Pie, Cell
+} from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import s from './TeacherDashboard.module.css';
+import { downloadSingleReportPDF } from '../utils/pdfGenerator';
 
 /* ── API helpers ─────────────────────────────────── */
 const API = 'http://localhost:5001/api';
@@ -238,23 +244,7 @@ function ReportsTab() {
   };
 
   const downloadPDF = (r) => {
-    const doc = new jsPDF();
-    doc.setFontSize(22); doc.setTextColor(61, 181, 160);
-    doc.text('BrightSteps — Student Progress Report', 20, 22);
-    autoTable(doc, {
-      startY: 34,
-      head: [['Field', 'Details']],
-      body: [
-        ['Student',  r.studentName],
-        ['Date',     new Date(r.date).toLocaleDateString()],
-        ['Activity', r.activity || '—'],
-        ['Mood',     r.mood || '—'],
-        ['Notes',    r.notes || '—'],
-      ],
-      headStyles: { fillColor: [61, 181, 160] },
-      alternateRowStyles: { fillColor: [240, 253, 250] },
-    });
-    doc.save(`${r.studentName}_Report.pdf`);
+    downloadSingleReportPDF(r, 'BrightSteps — Student Progress Report');
   };
 
   return (
@@ -670,6 +660,377 @@ function InboxTab() {
 }
 
 /* ═══════════════════════════════════════════════════
+   TAB 5 — ANALYTICS (real backend data)
+═══════════════════════════════════════════════════ */
+const CHART_COLORS = ['#E85C45', '#44A7CE', '#5EAD6E', '#9C80D2', '#F2B53A', '#f9a8d4'];
+
+const MOOD_EMOJI_MAP = {
+  Happy: '😊', Excited: '🤩', Neutral: '😐', Tired: '😴', Frustrated: '😤',
+};
+
+function getPeriodDefaults(reportType) {
+  const today = new Date();
+  const end = today.toISOString().split('T')[0];
+  const startDate = new Date(today);
+  if (reportType === 'weekly') {
+    startDate.setDate(today.getDate() - 6);
+  } else {
+    startDate.setDate(today.getDate() - 29);
+  }
+  return { startDate: startDate.toISOString().split('T')[0], endDate: end };
+}
+
+function AnalyticsTab() {
+  const [reportType, setReportType] = useState('weekly');
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [dateRange, setDateRange] = useState(getPeriodDefaults('weekly'));
+
+  const [data, setData] = useState(null);
+  const [compData, setCompData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch main analytics data
+  const fetchAnalytics = async (period, start, end, student) => {
+    const params = new URLSearchParams();
+    params.set('period', period);
+    if (start) params.set('startDate', start);
+    if (end) params.set('endDate', end);
+    if (student) params.set('studentName', student);
+    const res = await fetch(`${API}/analytics/teacher-summary?${params}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch analytics');
+    return res.json();
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const main = await fetchAnalytics(reportType, dateRange.startDate, dateRange.endDate, selectedStudent);
+      setData(main);
+
+      // Fetch comparison data (weekly AND monthly, ignoring filters)
+      const [weekly, monthly] = await Promise.all([
+        fetchAnalytics('weekly', null, null, selectedStudent),
+        fetchAnalytics('monthly', null, null, selectedStudent),
+      ]);
+      setCompData([
+        { metric: 'Active Students', Weekly: weekly.summary.activeStudentsInPeriod, Monthly: monthly.summary.activeStudentsInPeriod },
+        { metric: 'Total Reports', Weekly: weekly.summary.totalReports, Monthly: monthly.summary.totalReports },
+        { metric: 'Resources Shared', Weekly: weekly.summary.totalResources, Monthly: monthly.summary.totalResources },
+        { metric: 'Game Play Time (s)', Weekly: weekly.summary.totalGamePlayTime, Monthly: monthly.summary.totalGamePlayTime },
+      ]);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [reportType, dateRange, selectedStudent]); // eslint-disable-line
+
+  useEffect(() => {
+    setDateRange(getPeriodDefaults(reportType));
+  }, [reportType]);
+
+  const resetFilters = () => {
+    setReportType('weekly');
+    setSelectedStudent('');
+    setDateRange(getPeriodDefaults('weekly'));
+  };
+
+  const exportAnalyticsPDF = () => {
+    if (!data) return;
+    const doc = new jsPDF();
+    let currentY = 20;
+    doc.setFontSize(20); doc.setTextColor(61, 181, 160);
+    doc.text('BrightSteps Teacher Analytics Report', 14, currentY); currentY += 10;
+    doc.setFontSize(11); doc.setTextColor(70, 70, 70);
+    doc.text(`Report Type: ${data.period.toUpperCase()}`, 14, currentY); currentY += 6;
+    doc.text(`Date Range: ${data.startDate} to ${data.endDate}`, 14, currentY); currentY += 6;
+    if (selectedStudent) { doc.text(`Student: ${selectedStudent}`, 14, currentY); currentY += 6; }
+    currentY += 4;
+    const summaryRows = [
+      ['Total Students', String(data.summary.totalStudents)],
+      ['Active This Period', String(data.summary.activeStudentsInPeriod)],
+      ['Total Reports', String(data.summary.totalReports)],
+      ['Unique Activities', String(data.summary.totalActivities)],
+      ['Resources Shared', String(data.summary.totalResources)],
+      ['Game Play Time', `${data.summary.totalGamePlayTime}s`],
+    ];
+    autoTable(doc, { startY: currentY, head: [['Metric', 'Value']], body: summaryRows, headStyles: { fillColor: [61, 181, 160] }, alternateRowStyles: { fillColor: [240, 253, 250] } });
+    currentY = doc.lastAutoTable.finalY + 10;
+    if (data.reportsByStudent.length) {
+      autoTable(doc, { startY: currentY, head: [['Student', 'Reports', 'Active Days', 'Attendance', 'Activities', 'Game Reports', 'Top Mood']], body: data.reportsByStudent.map(r => [r.studentName, r.totalReports, r.activeDays, r.attendance, r.uniqueActivities, r.gameReports, r.topMood]), headStyles: { fillColor: [94, 207, 186] }, alternateRowStyles: { fillColor: [247, 255, 252] } });
+      currentY = doc.lastAutoTable.finalY + 10;
+    }
+    if (data.leaderboard.length) {
+      autoTable(doc, { startY: currentY, head: [['Rank', 'Student', 'Game', 'Stars', 'Time(s)', 'Moves']], body: data.leaderboard.map(r => [r.rank, r.studentName, r.gameName, r.stars, r.completionTime, r.totalMoves]), headStyles: { fillColor: [242, 181, 58] }, alternateRowStyles: { fillColor: [255, 252, 240] } });
+    }
+    doc.save(`teacher_${data.period}_analytics_report.pdf`);
+  };
+
+  if (loading) {
+    return <div className={s.emptyState}><div className={s.emptyIcon}>⏳</div><p>Loading analytics…</p></div>;
+  }
+  if (error) {
+    return <div className={s.emptyState}><div className={s.emptyIcon}>❌</div><p>Error: {error}</p><button className={s.refreshBtn} onClick={loadData}><RefreshCcw size={15} /> Retry</button></div>;
+  }
+  if (!data) return null;
+
+  const { summary, reportsByStudent, dailyActivity, moodDistribution, resourceTypeBreakdown, resourceSkillBreakdown, resourceList, levelDistribution, gameTimeData, gamePerformance, leaderboard, students } = data;
+
+  const summaryCards = [
+    { icon: '👥', label: 'Total Students', value: summary.totalStudents },
+    { icon: '🟢', label: 'Active This Period', value: summary.activeStudentsInPeriod },
+    { icon: '📋', label: 'Total Reports', value: summary.totalReports },
+    { icon: '🎯', label: 'Unique Activities', value: summary.totalActivities },
+    { icon: '📚', label: 'Resources Shared', value: summary.totalResources },
+    { icon: '🎮', label: 'Game Play Time', value: `${summary.totalGamePlayTime}s` },
+  ];
+
+  return (
+    <>
+      {/* ── Header ── */}
+      <div className={s.sectionHeader}>
+        <div>
+          <h2>📊 {reportType === 'weekly' ? 'Weekly' : 'Monthly'} Analytics</h2>
+          <p>Real-time overview of student activity, resources, and game performance.</p>
+        </div>
+        <button className={s.refreshBtn} onClick={exportAnalyticsPDF}>
+          <FileText size={15} /> Export PDF
+        </button>
+      </div>
+
+      {/* ── Filters ── */}
+      <div className={s.analyticsFiltersCard}>
+        <div className={s.analyticsFiltersHead}>
+          <div className={s.analyticsFiltersLabel}><Filter size={16} /> Filters</div>
+          <button className={s.refreshBtn} onClick={resetFilters}>Reset</button>
+        </div>
+        <div className={s.analyticsFiltersGrid}>
+          <div className={s.analyticsFilterGroup}>
+            <label>Report Type</label>
+            <select className={s.formInput} value={reportType} onChange={e => setReportType(e.target.value)}>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div className={s.analyticsFilterGroup}>
+            <label>Student</label>
+            <select className={s.formInput} value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)}>
+              <option value="">All Students</option>
+              {students.map(st => <option key={st._id} value={st.name}>{st.name}</option>)}
+            </select>
+          </div>
+          <div className={s.analyticsFilterGroup}>
+            <label>Start Date</label>
+            <input className={s.formInput} type="date" value={dateRange.startDate} onChange={e => setDateRange(p => ({ ...p, startDate: e.target.value }))} />
+          </div>
+          <div className={s.analyticsFilterGroup}>
+            <label>End Date</label>
+            <input className={s.formInput} type="date" value={dateRange.endDate} onChange={e => setDateRange(p => ({ ...p, endDate: e.target.value }))} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Summary Cards ── */}
+      <div className={s.analyticsSummaryGrid}>
+        {summaryCards.map(card => (
+          <div key={card.label} className={s.analyticsSummaryCard}>
+            <div className={s.analyticsSummaryIcon}>{card.icon}</div>
+            <div className={s.analyticsSummaryValue}>{card.value}</div>
+            <div className={s.analyticsSummaryLabel}>{card.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Section 1: Report Activity ── */}
+      <div className={s.analyticsBlock}>
+        <div className={s.analyticsBlockHead}>
+          <h3>1. Student Report Activity</h3>
+          <span className={s.statBox}>{summary.totalReports} Reports · {summary.activeStudentsInPeriod} Students</span>
+        </div>
+        <div className={s.analyticsChartsRow}>
+          <div className={s.analyticsChartCard}>
+            <h4>Daily Report Trend</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dailyActivity}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
+                  <Line type="monotone" dataKey="reports" stroke="#E85C45" name="Reports" strokeWidth={3} />
+                  <Line type="monotone" dataKey="uniqueStudents" stroke="#44A7CE" name="Active Students" strokeWidth={3} />
+                  <Line type="monotone" dataKey="gameReports" stroke="#5EAD6E" name="Game Reports" strokeWidth={3} />
+                  <Line type="monotone" dataKey="totalStars" stroke="#F2B53A" name="Stars Earned" strokeWidth={3} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className={s.analyticsChartCard}>
+            <h4>Mood Distribution</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={moodDistribution} dataKey="value" nameKey="name" outerRadius={90} label>
+                    {moodDistribution.map((entry, index) => (
+                      <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [`${value} reports`, `${MOOD_EMOJI_MAP[name] || ''} ${name}`]} /><Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+        <div className={s.analyticsTableScroll}>
+          <table className={s.analyticsTable}>
+            <thead><tr><th>Student</th><th>Reports</th><th>Active Days</th><th>Attendance</th><th>Activities</th><th>Game Reports</th><th>Stars</th><th>Top Mood</th></tr></thead>
+            <tbody>
+              {reportsByStudent.length ? reportsByStudent.map(row => (
+                <tr key={row.studentName}><td>{row.studentName}</td><td>{row.totalReports}</td><td>{row.activeDays}</td><td>{row.attendance}</td><td>{row.uniqueActivities}</td><td>{row.gameReports}</td><td>{row.totalStars}</td><td>{MOOD_EMOJI_MAP[row.topMood] || ''} {row.topMood}</td></tr>
+              )) : <tr><td colSpan="8" style={{textAlign:'center',padding:'20px',color:'var(--td-ink-soft)'}}>No report data for this period.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Section 2: Resource Activity ── */}
+      <div className={s.analyticsBlock}>
+        <div className={s.analyticsBlockHead}>
+          <h3>2. Resource & Recommendation Activity</h3>
+          <span className={s.statBox}>{summary.totalResources} Resources Shared</span>
+        </div>
+        <div className={s.analyticsChartsRow}>
+          <div className={s.analyticsChartCard}>
+            <h4>Resources by Type</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={resourceTypeBreakdown}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
+                  <Bar dataKey="total" fill="#44A7CE" name="Count" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className={s.analyticsChartCard}>
+            <h4>Resources by Target Skill</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={resourceSkillBreakdown} dataKey="value" nameKey="name" outerRadius={90} label>
+                    {resourceSkillBreakdown.map((entry, index) => (
+                      <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip /><Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+        <div className={s.analyticsTableScroll}>
+          <table className={s.analyticsTable}>
+            <thead><tr><th>Title</th><th>Type</th><th>Target Skill</th><th>Level</th><th>Assigned To</th><th>Date</th></tr></thead>
+            <tbody>
+              {resourceList.length ? resourceList.map(row => (
+                <tr key={row.id}><td>{row.title}</td><td>{row.type}</td><td>{row.targetSkill}</td><td>⭐ Lvl {row.requiredLevel}</td><td>{row.studentName || 'All'}</td><td>{new Date(row.createdAt).toLocaleDateString()}</td></tr>
+              )) : <tr><td colSpan="6" style={{textAlign:'center',padding:'20px',color:'var(--td-ink-soft)'}}>No resources shared in this period.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Section 3: Games Analytics ── */}
+      <div className={s.analyticsBlock}>
+        <div className={s.analyticsBlockHead}>
+          <h3>3. Educational Games Analytics</h3>
+          <span className={s.statBox}>{summary.totalGamePlayTime}s Total Play Time</span>
+        </div>
+        <div className={s.analyticsChartsRow3}>
+          <div className={s.analyticsChartCard}>
+            <h4>Performance Distribution</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie data={levelDistribution} dataKey="value" nameKey="name" outerRadius={80} label>
+                    {levelDistribution.map((entry, index) => (
+                      <Cell key={entry.name} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip /><Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className={s.analyticsChartCard}>
+            <h4>Time Spent per Game</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={gameTimeData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip />
+                  <Bar dataKey="total" fill="#5EAD6E" name="Seconds" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className={s.analyticsChartCard}>
+            <h4>Plays & Moves per Game</h4>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={gamePerformance}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
+                  <Bar dataKey="plays" fill="#E85C45" name="Plays" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="totalMoves" fill="#9C80D2" name="Total Moves" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+        <div className={s.analyticsTableScroll}>
+          <table className={s.analyticsTable}>
+            <thead><tr><th>Rank</th><th>Student</th><th>Game</th><th>Stars</th><th>Time</th><th>Moves</th><th>Date</th></tr></thead>
+            <tbody>
+              {leaderboard.length ? leaderboard.map(row => (
+                <tr key={`${row.rank}-${row.gameName}`}><td>#{row.rank}</td><td>{row.studentName}</td><td>{row.gameName}</td><td>{'⭐'.repeat(row.stars)}</td><td>{row.completionTime}s</td><td>{row.totalMoves}</td><td>{new Date(row.date).toLocaleDateString()}</td></tr>
+              )) : <tr><td colSpan="7" style={{textAlign:'center',padding:'20px',color:'var(--td-ink-soft)'}}>No game data for this period.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Section 4: Weekly vs Monthly Comparison ── */}
+      {compData && (
+        <div className={s.analyticsBlock}>
+          <div className={s.analyticsBlockHead}>
+            <h3>4. Weekly vs Monthly Comparison</h3>
+            <span className={s.statBox}>Side-by-Side</span>
+          </div>
+          <div className={s.analyticsChartCard}>
+            <div className={s.chartWrap}>
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart data={compData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="metric" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
+                  <Bar dataKey="Weekly" fill="#44A7CE" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Monthly" fill="#E85C45" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
    MAIN — TEACHER DASHBOARD
 ═══════════════════════════════════════════════════ */
 const TABS = [
@@ -677,6 +1038,7 @@ const TABS = [
   { id: 'reports',   label: 'Progress Reports', icon: <ClipboardList size={17} /> },
   { id: 'resources', label: 'Resource Library', icon: <BookOpen size={17} /> },
   { id: 'inbox',     label: 'Messages',        icon: <MessageSquare size={17} /> },
+  { id: 'analytics', label: 'Analytics',       icon: <BarChart3 size={17} /> },
 ];
 
 export default function TeacherDashboard() {
@@ -753,6 +1115,7 @@ export default function TeacherDashboard() {
         {activeTab === 'reports'   && <ReportsTab />}
         {activeTab === 'resources' && <ResourcesTab />}
         {activeTab === 'inbox'     && <InboxTab />}
+        {activeTab === 'analytics' && <AnalyticsTab />}
       </main>
 
     </div>

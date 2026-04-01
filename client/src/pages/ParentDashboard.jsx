@@ -11,9 +11,9 @@ import {
   ClipboardList, MessageSquare, LogOut,
   RefreshCcw, Download, ExternalLink, Plus, Trash2, X, Send, Edit2, Check
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import s from './ParentDashboard.module.css';
+import { downloadSingleReportPDF } from '../utils/pdfGenerator';
+
 
 /* ── Constants ─────────────────────────────── */
 const API = 'http://localhost:5001/api';
@@ -378,24 +378,11 @@ function ProgressTab({ childName }) {
   useEffect(() => { load(); }, [load, childName]);
 
   const downloadPDF = (r) => {
-    const doc = new jsPDF();
-    doc.setFontSize(22); doc.setTextColor(61, 181, 160);
-    doc.text('BrightSteps — Progress Report', 20, 22);
-    autoTable(doc, {
-      startY: 34,
-      head: [['Field', 'Details']],
-      body: [
-        ['Student',  r.studentName],
-        ['Date',     new Date(r.date).toLocaleDateString()],
-        ['Activity', r.activity || '—'],
-        ['Mood',     r.mood || '—'],
-        ['Notes',    r.notes || '—'],
-      ],
-      headStyles: { fillColor: [61, 181, 160] },
-      alternateRowStyles: { fillColor: [240, 253, 250] },
-    });
-    doc.save(`${r.studentName}_Report.pdf`);
+    downloadSingleReportPDF(r, 'BrightSteps — Progress Report');
   };
+
+  const totalHappy = reports.filter(r => r.mood === 'Happy' || r.mood === 'Excited').length;
+  const totalStars = reports.reduce((sum, r) => sum + (r.stars || 0), 0);
 
   return (
     <>
@@ -408,6 +395,26 @@ function ProgressTab({ childName }) {
           <RefreshCcw size={15} /> Refresh
         </button>
       </div>
+
+      {!loading && reports.length > 0 && (
+        <div className={s.progressSummaryBanner}>
+          <div className={s.psbAvatarArea}>
+            <div className={s.psbAvatar}>🎓</div>
+          </div>
+          <div className={s.psbDetails}>
+            <h3>Child Dashboard Summary</h3>
+            <div className={s.psbMetaRow}>
+              <span className={`${s.psbPill} ${s.sky}`}>📋 {reports.length} Reports</span>
+              <span className={`${s.psbPill} ${s.sage}`}>😊 {totalHappy} Happy Days</span>
+              <span className={`${s.psbPill} ${s.amber}`}>⭐ {totalStars} Stars Earned</span>
+            </div>
+            <p className={s.psbDesc}>
+              You are viewing progress reports securely scoped to <strong>{childName}</strong>. 
+              All data is directly from teacher submissions and completed learning hub activities.
+            </p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className={s.emptyState}><div className={s.emptyIcon}>⏳</div><p>Loading reports…</p></div>

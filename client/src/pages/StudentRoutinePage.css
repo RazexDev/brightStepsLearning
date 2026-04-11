@@ -601,4 +601,145 @@
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-20px) rotate(20deg); }
 }
+
+/* ══ GAMIFICATION LEVELS ══ */
+.sr-stat-pill.champion { border-color: var(--amber); background: linear-gradient(135deg, white 0%, #FFF4E0 100%); box-shadow: 0 4px 15px rgba(255, 183, 51, 0.3); }
+.sr-stat-pill.star-kid { border-color: var(--sky); background: linear-gradient(135deg, white 0%, #E0F7FF 100%); }
+.sr-stat-pill.beginner { border-color: var(--teal); }
+
+/* ══ MODES (TOGGLES) ══ */
+.sr-toggle-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.sr-mode-btn {
+  padding: 8px 18px;
+  border-radius: var(--sr-pill);
+  border: 2.5px solid rgba(0,0,0,0.1);
+  background: white;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--sr-ink-mid);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sr-mode-btn:hover {
+  background: #f8f9fa;
+  transform: translateY(-2px);
+}
+
+.sr-mode-btn.active {
+  background: var(--teal-dk);
+  color: white;
+  border-color: var(--teal);
+  box-shadow: 0 4px 12px rgba(61, 181, 160, 0.3);
+}
+
+/* ══ FOCUS MODE OVERRIDES ══ */
+.sr-focus-active .sr-grid {
+  display: flex;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.sr-focus-active .sr-card {
+  max-width: 600px;
+  width: 100%;
+  border-width: 8px !important; /* Extra thick border for focus */
+  transform: scale(1.05);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.15);
+  animation: sr-focus-pulse 4s infinite ease-in-out !important;
+}
+
+@keyframes sr-focus-pulse {
+  0%, 100% { transform: scale(1.05); }
+  50% { transform: scale(1.07); }
+}
+
+/* ══ CALM MODE (LOW STIMULATION) ══ */
+body.low-stim .sr-deco,
+body.low-stim .sr-celebration-overlay,
+body.low-stim .sr-hero-emoji-row span:nth-child(2),
+body.low-stim .sr-hero-emoji-row span:nth-child(3) {
+  display: none !important;
+}
+
+body.low-stim .sr-hero {
+  background: #F8F9FA;
+  border-bottom-color: #E9ECEF;
+}
+
+body.low-stim .sr-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-width: 2px !important;
+  background: white;
+}
+
+body.low-stim .sr-page {
+  background: white;
+}
+
+body.low-stim * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ══ FILTER PILLS ══ */
+.sr-filter-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.sr-filter-pill {
+  padding: 6px 14px;
+  border-radius: var(--sr-pill);
+  border: 2px solid transparent;
+  background: #F1F5F9;
+  color: #64748B;
+  font-weight: 800;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sr-filter-pill:hover {
+  background: #E2E8F0;
+}
+
+.sr-filter-pill.active {
+  background: var(--sky-dk);
+  color: white;
+  box-shadow: 0 4px 10px rgba(68, 167, 206, 0.3);
+}
+
+/* ── FOCUS CARD HINTS ── */
+.sr-focus-card {
+  position: relative;
+}
+
+.sr-focus-hint {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--amber);
+  color: white;
+  padding: 6px 16px;
+  border-radius: var(--sr-pill);
+  font-weight: 800;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(255, 183, 51, 0.4);
+  z-index: 10;
+  white-space: nowrap;
+}
+
+
 

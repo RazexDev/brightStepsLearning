@@ -18,6 +18,9 @@ function getSmartMockRoutine(name, type, goals = []) {
       ? ["Focus management", "Task initiation", "Independence"]
       : ["Independence", "Self-care", "Routine consistency"],
     parentNote: "Mock AI routine used because Gemini was unavailable.",
+    explanation: isAutism 
+      ? "This routine uses consistent patterns to reduce transition anxiety and support sensory balance." 
+      : "This routine uses short, high-impact tasks with clear breaks to help maintain focus and motivation.",
     tasks: [
       { label: "Wake up and get ready", mins: 10 },
       { label: "Brush teeth and wash face", mins: 10 },
@@ -111,6 +114,7 @@ Return ONLY valid JSON in this exact format:
   "goal": "string",
   "skills": ["string", "string"],
   "parentNote": "string",
+  "explanation": "string (Why this routine works for this child's specific needs)",
   "tasks": [
     { "label": "string", "mins": 10 }
   ]
@@ -130,6 +134,7 @@ Return ONLY valid JSON in this exact format:
       goal: parsed.goal || "Build routine consistency",
       skills: Array.isArray(parsed.skills) ? parsed.skills : [],
       parentNote: parsed.parentNote || "",
+      explanation: parsed.explanation || "",
       tasks: Array.isArray(parsed.tasks)
         ? parsed.tasks.map((task) => ({
             label: String(task.label || "").trim(),

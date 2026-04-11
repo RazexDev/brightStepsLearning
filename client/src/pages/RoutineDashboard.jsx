@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   ArrowLeft,
   Search,
@@ -94,19 +94,24 @@ function generateReportPDF({ studentName, totalStars, completedRoutines, earnedB
           </ul>
         </div>
 
-        <script>
-          window.onload = () => setTimeout(() => window.print(), 300);
-        </script>
       </body>
     </html>
   `;
 
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const win = window.open(url, "_blank");
-  if (win) {
-    win.onafterprint = () => URL.revokeObjectURL(url);
-  }
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:210mm;height:297mm;border:none;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => document.body.removeChild(iframe), 1500);
+  }, 400);
 }
 
 function ConfirmDeleteModal({ routine, onConfirm, onCancel }) {

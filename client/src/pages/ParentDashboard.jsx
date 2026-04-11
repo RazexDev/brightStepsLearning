@@ -138,6 +138,7 @@ function RoutinesTab({ childName }) {
   // Search/filter state
   const [searchQuery,    setSearchQuery]    = React.useState('');
   const [filterCategory, setFilterCategory] = React.useState('all');
+  const [filterStatus,   setFilterStatus]   = React.useState('all'); // Added filterStatus
 
   // Drag-and-drop state
   const [dragIndex,      setDragIndex]      = React.useState(null);
@@ -390,6 +391,8 @@ function RoutinesTab({ childName }) {
     const q = searchQuery.toLowerCase().trim();
     return routines.filter(r => {
       if (filterCategory !== 'all' && r.category !== filterCategory) return false;
+      if (filterStatus === 'done' && !(r.progress === 100 || r.completed)) return false;
+      if (filterStatus === 'todo' && (r.progress === 100 || r.completed)) return false;
       if (!q) return true;
       return (
         r.title?.toLowerCase().includes(q) ||
@@ -398,7 +401,7 @@ function RoutinesTab({ childName }) {
         r.goal?.toLowerCase().includes(q)
       );
     });
-  }, [routines, searchQuery, filterCategory]);
+  }, [routines, searchQuery, filterCategory, filterStatus]);
 
   const [activeRoutines, doneRoutines] = React.useMemo(() => {
     const active = [];
@@ -509,7 +512,7 @@ function RoutinesTab({ childName }) {
         </div>
         <select className={s.formInput} style={{ flex: 'none', width: 'auto' }}
           value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
-          <option value="all">All Categories</option>
+          <option value="all">Everywhere</option>
           <option value="morning">🌅 Morning</option>
           <option value="school">🏫 School</option>
           <option value="study">📚 Study</option>
@@ -517,8 +520,14 @@ function RoutinesTab({ childName }) {
           <option value="bedtime">🌙 Bedtime</option>
           <option value="custom">⚙️ Custom</option>
         </select>
-        {(searchQuery || filterCategory !== 'all') && (
-          <button className={s.refreshBtn} onClick={() => { setSearchQuery(''); setFilterCategory('all'); }}><X size={14} /></button>
+        <select className={s.formInput} style={{ flex: 'none', width: 'auto' }}
+          value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+          <option value="all">All Status</option>
+          <option value="todo">⏳ To Do</option>
+          <option value="done">✅ Done</option>
+        </select>
+        {(searchQuery || filterCategory !== 'all' || filterStatus !== 'all') && (
+          <button className={s.refreshBtn} onClick={() => { setSearchQuery(''); setFilterCategory('all'); setFilterStatus('all'); }}><X size={14} /></button>
         )}
       </div>
 
@@ -585,6 +594,43 @@ function RoutinesTab({ childName }) {
               <p style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: stat.color }}>{stat.value}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* PARENT INSIGHTS */}
+      {summary && (
+        <div className={s.insightsBox} style={{ marginBottom: 40 }}>
+          <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            🧠 Parent Insights & Trends
+          </h4>
+          <div className={s.insightGrid}>
+            <div className={s.insightItem}>
+              <span className={s.insightBulb}>💡</span>
+              <p>
+                {summary.completionPercentage > 75 
+                  ? `${childName} is doing amazing! Routines are becoming a strong habit.`
+                  : summary.completionPercentage > 40
+                  ? `${childName} is making progress. Consistency is key!`
+                  : `Try simplifying tasks to help ${childName} gain more "quick wins".`
+                }
+              </p>
+            </div>
+            <div className={s.insightItem}>
+              <span className={s.insightBulb}>📈</span>
+              <p>
+                {summary.totalStars > 50 
+                  ? "High engagement detected this week. Consider a special weekend reward!"
+                  : "Keep encouraging the star system to maintain motivation."
+                }
+              </p>
+            </div>
+            {routines.some(r => r.category === 'morning' && (r.progress || 0) < 50) && (
+              <div className={s.insightItem}>
+                <span className={s.insightBulb}>🌅</span>
+                <p>Morning routines seem challenging lately. Try adding sensory or calm visuals to the start of the day.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -794,8 +840,19 @@ function RoutinesTab({ childName }) {
                            </div>
                          ))}
                       </div>
+
+                      {aiPreview.explanation && (
+                        <div className={s.aiWhySection} style={{ marginTop: 20, padding: 15, background: 'var(--pd-sky-bg)', borderRadius: 12, border: '1px solid var(--pd-sky)' }}>
+                          <p style={{ margin: '0 0 5px', fontSize: '0.75rem', fontWeight: 900, color: 'var(--pd-sky-dk)', textTransform: 'uppercase' }}>
+                            ✨ Why this routine works:
+                          </p>
+                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--pd-ink-mid)', lineHeight: 1.4 }}>
+                            {aiPreview.explanation}
+                          </p>
+                        </div>
+                      )}
                       
-                      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--pd-ink-soft)', fontStyle: 'italic', textAlign: 'center' }}>
+                      <p style={{ margin: 20, fontSize: '0.85rem', fontWeight: 600, color: 'var(--pd-ink-soft)', fontStyle: 'italic', textAlign: 'center' }}>
                         "This routine is tailored for {childName}'s {aiForm.disabilityType} needs."
                       </p>
                    </div>

@@ -33,9 +33,12 @@ function StarRow({ filled = 0, total = 5 }) {
   );
 }
 
-function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation, isDone }) {
+function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation, isDone, focusModeActive }) {
   return (
-    <div className={`sr-card ${routine.category || 'custom'} ${isDone ? 'sr-card-done' : ''}`}>
+    <div className={`sr-card ${routine.category || 'custom'} ${isDone ? 'sr-card-done' : ''} ${focusModeActive ? 'sr-focus-card' : ''}`}>
+      {focusModeActive && !isDone && (
+        <div className="sr-focus-hint">🌟 Just worry about this one step!</div>
+      )}
       <div className="sr-card-top">
         <div className="sr-card-header">
           <div className="sr-card-emoji-box">{routine.iconEmoji || routine.emoji || '📋'}</div>
@@ -75,14 +78,14 @@ function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation, 
       </div>
 
       <div className="sr-task-list">
-        {(routine.tasks || []).map((task, index) => (
-          <label key={`${routine._id}-${index}`} className={`sr-task-item ${task.completed ? 'done' : ''}`}>
+        {(routine.tasks || []).map((task) => (
+          <label key={`${routine._id}-${task.originalIndex ?? 0}`} className={`sr-task-item ${task.completed ? 'done' : ''}`}>
             <input
               type="checkbox"
               className="sr-checkbox"
               checked={!!task.completed}
               disabled={!started && !isDone}
-              onChange={(e) => onToggleTask(routine._id, index, e.target.checked)}
+              onChange={(e) => onToggleTask(routine._id, task.originalIndex ?? 0, e.target.checked)}
             />
             <div className="sr-task-content">
               <span className="sr-task-label">{task.label}</span>
@@ -140,6 +143,40 @@ export default function StudentRoutinePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMotivation, setShowMotivation] = useState(false);
   const [celebrationRoutineId, setCelebrationRoutineId] = useState(null);
+  const [focusMode, setFocusMode] = useState(() => localStorage.getItem('sr_focus_mode') === 'true');
+  const [calmMode, setCalmMode] = useState(() => localStorage.getItem('sr_calm_mode') === 'true');
+
+  // Programmatic Pop Sound Helper
+  const playPopSound = () => {
+    if (calmMode) return;
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) { console.warn('Audio play failed', e); }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('sr_focus_mode', focusMode);
+  }, [focusMode]);
+
+  useEffect(() => {
+    localStorage.setItem('sr_calm_mode', calmMode);
+    if (calmMode) {
+      document.body.classList.add('low-stim');
+    } else {
+      document.body.classList.remove('low-stim');
+    }
+  }, [calmMode]);
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayName = days[new Date().getDay()];
@@ -190,11 +227,14 @@ export default function StudentRoutinePage() {
 
       if (completed) {
         setShowMotivation(true);
+        playPopSound();
         setTimeout(() => setShowMotivation(false), 3000);
 
         if (updated.completed) {
-          setCelebrationRoutineId(updated._id);
-          setTimeout(() => setCelebrationRoutineId(null), 5000);
+          if (!calmMode) {
+            setCelebrationRoutineId(updated._id);
+            setTimeout(() => setCelebrationRoutineId(null), 5000);
+          }
         }
       }
     } catch (err) {
@@ -205,16 +245,31 @@ export default function StudentRoutinePage() {
   const totalCompleted = useMemo(() => routines.filter((r) => r.completed).length, [routines]);
   const totalStars = useMemo(() => routines.reduce((sum, r) => sum + (r.rewards?.starsEarned || 0), 0), [routines]);
 
+  // Streak and Level Logic
+  const levelCfg = useMemo(() => {
+    if (totalStars >= 100) return { name: 'Champion 🏆', class: 'champion' };
+    if (totalStars >= 50) return { name: 'Star Kid ⭐', class: 'star-kid' };
+    return { name: 'Beginner 🌱', class: 'beginner' };
+  }, [totalStars]);
+
+  const streak = useMemo(() => {
+    // Mocking streak based on completion consistency for demo, 
+    // ideally this is calculated from daily logs in the backend.
+    return totalCompleted > 3 ? 3 : totalCompleted; 
+  }, [totalCompleted]);
+
+  const [filterType, setFilterType] = useState('all');
+
   const filteredRoutines = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return routines.filter((r) => {
-      return (
-        r.title.toLowerCase().includes(q) ||
+      const matchSearch = r.title.toLowerCase().includes(q) ||
         (r.category && r.category.toLowerCase().includes(q)) ||
-        (r.tasks && r.tasks.some((t) => t.label.toLowerCase().includes(q)))
-      );
+        (r.tasks && r.tasks.some((t) => t.label.toLowerCase().includes(q)));
+      const matchType = filterType === 'all' || (r.type || '').toLowerCase() === filterType;
+      return matchSearch && matchType;
     });
-  }, [routines, searchQuery]);
+  }, [routines, searchQuery, filterType]);
 
   const [activeRoutines, doneRoutines] = useMemo(() => {
     const active = [];
@@ -256,25 +311,44 @@ export default function StudentRoutinePage() {
           </p>
 
           <div className="sr-stats-row">
-            <div className="sr-stat-pill amber">⭐ {totalStars} Stars</div>
-            <div className="sr-stat-pill teal">✅ {totalCompleted} Done</div>
-            <div className="sr-stat-pill rose">📋 {routines.length} Total</div>
+            <div className={`sr-stat-pill amber ${levelCfg.class}`}>🏅 {levelCfg.name}</div>
+            <div className="sr-stat-pill teal">🔥 {streak}-day streak</div>
+            <div className="sr-stat-pill rose">⭐ {totalStars} Stars</div>
+          </div>
+          
+          <div className="sr-toggle-row">
+            <button className={`sr-mode-btn ${focusMode ? 'active' : ''}`} onClick={() => setFocusMode(!focusMode)}>
+              {focusMode ? '👁️ Focus Mode: On' : '🔍 Enable Focus Mode'}
+            </button>
+            <button className={`sr-mode-btn ${calmMode ? 'active' : ''}`} onClick={() => setCalmMode(!calmMode)}>
+              {calmMode ? '🧘 Calm Mode: On' : '🍃 Enable Calm Mode'}
+            </button>
           </div>
         </div>
       </section>
 
       <main className="sr-main">
-        {/* ══ SEARCH ══ */}
         <div className="sr-search-area">
           <div className="sr-search-bar">
             <Search size={20} color="var(--sky)" />
             <input
               type="text"
-              placeholder="Search routines or tasks..."
+              placeholder="Search routines..."
               className="sr-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </div>
+          <div className="sr-filter-row">
+             {['all', 'adhd', 'autism', 'general'].map(type => (
+               <button 
+                 key={type} 
+                 className={`sr-filter-pill ${filterType === type ? 'active' : ''}`}
+                 onClick={() => setFilterType(type)}
+               >
+                 {type.toUpperCase()}
+               </button>
+             ))}
           </div>
         </div>
 
@@ -321,27 +395,50 @@ export default function StudentRoutinePage() {
             <p>Ask your parent to set up a new daily schedule for you.</p>
           </div>
         ) : (
-          <div className="sr-content-stack">
+          <div className={`sr-content-stack ${focusMode ? 'sr-focus-active' : ''}`}>
             {/* ══ ACTIVE ══ */}
             {activeRoutines.length > 0 && (
               <div className="sr-active-section">
                 <div className="sr-grid">
-                  {activeRoutines.map((routine) => (
-                    <RoutineCard
-                      key={routine._id}
-                      routine={routine}
-                      started={startedRoutineId === routine._id}
-                      onStart={handleStartRoutine}
-                      onToggleTask={handleTaskToggle}
-                      showMotivation={showMotivation}
-                    />
-                  ))}
+                  {activeRoutines.map((routine) => {
+                    // IF FOCUS MODE IS ON, only show one task
+                    let displayRoutine = routine;
+                    if (focusMode) {
+                      const nextTaskIndex = routine.tasks.findIndex(t => !t.completed);
+                      const taskToShow = nextTaskIndex !== -1 
+                        ? { ...routine.tasks[nextTaskIndex], originalIndex: nextTaskIndex }
+                        : { ...routine.tasks[routine.tasks.length-1], originalIndex: routine.tasks.length-1 };
+                      
+                      displayRoutine = {
+                        ...routine,
+                        tasks: [taskToShow]
+                      };
+                    } else {
+                      // Add originalIndex to all tasks for consistency
+                      displayRoutine = {
+                        ...routine,
+                        tasks: routine.tasks.map((t, i) => ({ ...t, originalIndex: i }))
+                      };
+                    }
+
+                    return (
+                      <RoutineCard
+                        key={routine._id}
+                        routine={displayRoutine}
+                        started={startedRoutineId === routine._id}
+                        onStart={handleStartRoutine}
+                        onToggleTask={handleTaskToggle}
+                        showMotivation={showMotivation}
+                        focusModeActive={focusMode}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* ══ DONE ══ */}
-            {doneRoutines.length > 0 && (
+            {!focusMode && doneRoutines.length > 0 && (
               <div className="sr-done-section">
                 <h3 className="sr-done-heading">✅ Everything Done!</h3>
                 <div className="sr-grid">

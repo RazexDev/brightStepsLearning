@@ -154,7 +154,7 @@ export default function FocusMatch() {
     };
     
     try {
-      const response = await fetch('http://localhost:5001/api/progress', {
+      const response = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -212,7 +212,7 @@ export default function FocusMatch() {
       const user = JSON.parse(userString);
       const emailToUse = user.email || (user.user && user.user.email);
 
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailToUse, password: parentPassword }),

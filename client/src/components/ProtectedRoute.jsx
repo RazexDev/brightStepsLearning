@@ -26,7 +26,12 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (allowedRoles && allowedRoles.length > 0) {
     try {
       const user = JSON.parse(localStorage.getItem('brightsteps_user'));
-      if (!user || !allowedRoles.includes(user.role)) {
+      const isParentUnlocked = sessionStorage.getItem('parent_unlocked') === 'true';
+
+      // Allow access if user has the correct role OR if they have unlocked parent mode via PIN
+      const hasPermission = user && (allowedRoles.includes(user.role) || (user.role === 'student' && isParentUnlocked));
+
+      if (!hasPermission) {
         return <Navigate to="/unauthorized" replace />;
       }
     } catch {

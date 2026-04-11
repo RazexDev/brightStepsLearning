@@ -42,7 +42,7 @@ export default function DummyReportTool() {
     e.preventDefault();
     setStatus('Saving...');
     try {
-      const res = await fetch('http://localhost:5001/api/progress', {
+      const res = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, avatar: selectedAvatar }),

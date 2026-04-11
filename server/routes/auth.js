@@ -3,11 +3,12 @@ const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const { protect, parent } = require('../middleware/authMiddleware');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'brightsteps_secret_dev_123', { expiresIn: '30d' });
 };
 
 // ----------------------------------------------------
@@ -17,9 +18,17 @@ router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role, parentPin, googleToken, diagnosis } = req.body;
 
+    if (!name || !role) {
+      return res.status(400).json({ message: 'Name and role are required.' });
+    }
+
+    if (!['parent', 'student'].includes(role)) {
+      return res.status(400).json({ message: 'Role must be parent or student.' });
+    }
+
     let finalEmail = email;
 
-    // 🚀 NEW: If it's a Google signup, verify the token for security
+    // Google signup
     if (googleToken) {
       const ticket = await googleClient.verifyIdToken({
         idToken: googleToken,
@@ -28,39 +37,71 @@ router.post('/register', async (req, res) => {
       finalEmail = ticket.getPayload().email;
     }
 
+    if (!finalEmail) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    if (!googleToken && !password) {
+      return res.status(400).json({ message: 'Password is required.' });
+    }
+
     const userExists = await User.findOne({ email: finalEmail });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists with this email.' });
     }
 
-    // 🚀 NEW: Generate Custom ID
     const roleCount = await User.countDocuments({ role });
     const paddedNum = String(roleCount + 1).padStart(3, '0');
-    const prefix = role === 'teacher' ? 'TR' : 'ST';
+    const prefix = role === 'parent' ? 'PR' : 'ST';
     const customId = `${prefix}${paddedNum}`;
 
-    const user = await User.create({
+    const userPayload = {
       name,
       email: finalEmail,
-      password: googleToken ? '' : password, // No password needed for Google!
+      password: googleToken ? '' : password,
       role,
-      parentPin,
       customId,
-      diagnosis: role === 'teacher' ? null : (diagnosis || 'None')
-    });
+      diagnosis: role === 'student' ? (diagnosis || 'None') : null,
+    };
 
-    if (user) {
-      const generatedToken = generateToken(user._id);
-      res.status(201).json({
-        token: generatedToken,
-        user: { _id: user.id, name: user.name, email: user.email, role: user.role, customId: user.customId },
-        role: user.role,
-        customId: user.customId // include customId heavily at root for UI popups
-      });
+    if (parentPin) {
+      userPayload.parentPin = parentPin;
     }
+
+    const user = await User.create(userPayload);
+
+    if (!user) {
+      return res.status(500).json({ message: 'Failed to create user.' });
+    }
+
+    const generatedToken = generateToken(user._id);
+
+    const responseData = {
+      token: generatedToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        customId: user.customId,
+        diagnosis: user.diagnosis || null,
+      },
+      role: user.role,
+      customId: user.customId,
+    };
+
+    if (user.role === 'student') {
+      responseData.studentId = user._id;
+      responseData.user.studentId = user._id;
+    }
+
+    return res.status(201).json(responseData);
   } catch (error) {
-    console.error("🔥 REGISTRATION CRASH LOG:", error);
-    res.status(500).json({ message: 'Server error during registration', details: error.message });
+    console.error('🔥 REGISTRATION CRASH LOG:', error);
+    res.status(500).json({
+      message: 'Server error during registration',
+      details: error.message,
+    });
   }
 });
 
@@ -70,19 +111,41 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required.' });
+    }
+
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
       const generatedToken = generateToken(user._id);
-      res.status(200).json({
+
+      const responseData = {
         token: generatedToken,
-        user: { _id: user.id, name: user.name, email: user.email, role: user.role },
-        role: user.role
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          customId: user.customId,
+          diagnosis: user.diagnosis || null,
+          parentName: user.parentName || '',
+        },
+        role: user.role,
+      };
+
+      if (user.role === 'student') {
+        responseData.studentId = user._id;
+        responseData.user.studentId = user._id;
+      }
+
+      return res.status(200).json(responseData);
     }
+
+    return res.status(401).json({ message: 'Invalid email or password' });
   } catch (error) {
+    console.error('🔥 LOGIN ERROR:', error);
     res.status(500).json({ message: 'Server error during login' });
   }
 });
@@ -93,14 +156,63 @@ router.post('/login', async (req, res) => {
 router.post('/verify-pin', async (req, res) => {
   try {
     const { userId, pin } = req.body;
-    const user = await User.findById(userId);
-    
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.parentPin !== pin) return res.status(401).json({ message: 'Incorrect PIN. Try again!' });
 
-    res.json({ success: true, message: 'Parent verified' });
+    if (!userId || !pin) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Unable to verify: User ID and PIN are required.' 
+      });
+    }
+
+    // Wrap finding the user in a case-specific try-catch if needed, 
+    // but the main try-catch handles it for now.
+    const user = await User.findById(userId);
+
+    if (!user) {
+      console.warn(`⚠️ [verify-pin] User ${userId} not found.`);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Account not found. Please log in again.' 
+      });
+    }
+
+    if (!user.parentPin) {
+      console.warn(`⚠️ [verify-pin] Student ${user.name} (${userId}) has no Parent PIN set.`);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No parent PIN has been set for this account yet.' 
+      });
+    }
+
+    if (user.parentPin !== pin) {
+      console.warn(`❌ [verify-pin] Incorrect PIN for student ${user.name}.`);
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid PIN. Please try again!' 
+      });
+    }
+
+    console.log(`✅ [verify-pin] Parent verified for student ${user.name}.`);
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Parent identity verified successfully.' 
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Server error verifying PIN' });
+    console.error('🔥 VERIFY PIN CRASH:', error);
+    
+    // Check for specific Mongoose CastError (invalid ID format)
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Authentication error: Invalid user session format.'
+      });
+    }
+
+    res.status(500).json({ 
+      success: false,
+      message: 'Secure verification service is temporarily unavailable. Please try again later.', 
+    });
   }
 });
 
@@ -109,35 +221,53 @@ router.post('/verify-pin', async (req, res) => {
 // ----------------------------------------------------
 router.post('/google', async (req, res) => {
   try {
-    const { token } = req.body; 
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: 'Google token is required.' });
+    }
+
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    
+
     const payload = ticket.getPayload();
     let user = await User.findOne({ email: payload.email });
 
-    // 🚀 NEW: If they don't exist, tell the frontend to trigger "Step 2"
     if (!user) {
       return res.json({
         isNewUser: true,
         email: payload.email,
         name: payload.name,
-        googleToken: token
+        googleToken: token,
       });
     }
 
-    // If they do exist, log them in normally!
     const generatedToken = generateToken(user._id);
-    res.status(200).json({
-      token: generatedToken,
-      user: { _id: user.id, name: user.name, email: user.email, role: user.role },
-      role: user.role
-    });
 
+    const responseData = {
+      token: generatedToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        customId: user.customId,
+        diagnosis: user.diagnosis || null,
+        parentName: user.parentName || '',
+      },
+      role: user.role,
+    };
+
+    if (user.role === 'student') {
+      responseData.studentId = user._id;
+      responseData.user.studentId = user._id;
+    }
+
+    return res.status(200).json(responseData);
   } catch (error) {
-    console.error("Google Auth Error:", error);
+    console.error('Google Auth Error:', error);
     res.status(500).json({ message: 'Google authentication failed' });
   }
 });

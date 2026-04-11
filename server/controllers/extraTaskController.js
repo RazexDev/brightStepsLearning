@@ -1,21 +1,16 @@
 const ExtraTask = require("../models/ExtraTask");
+const Routine = require("../models/Routine");
 
-/* =====================================================
-   GET EXTRA TASKS
-   - Teacher: can filter by ?userId= (or all)
-   - Parent: only own extra tasks
-===================================================== */
 exports.getExtraTasks = async (req, res) => {
   try {
-    let query = {};
+    const query = { parentId: req.user._id };
 
-    if (req.user.role === 'teacher') {
-      if (req.query.userId) {
-        query.userId = req.query.userId;
-      }
-      // no userId filter = teacher sees all
-    } else {
-      query.userId = req.user._id;
+    if (req.query.studentId) {
+      query.studentId = req.query.studentId;
+    }
+
+    if (req.query.routineId) {
+      query.routineId = req.query.routineId;
     }
 
     const tasks = await ExtraTask.find(query).lean();
@@ -25,33 +20,41 @@ exports.getExtraTasks = async (req, res) => {
   }
 };
 
-/* =====================================================
-   ADD EXTRA TASK to a (default) routine
-===================================================== */
 exports.addExtraTask = async (req, res) => {
   try {
     const { routineId } = req.params;
     const { label, mins = 0 } = req.body || {};
 
-    if (!routineId || typeof routineId !== "string") {
-      return res.status(400).json({ message: "Invalid routineId" });
-    }
     if (!label || !label.trim()) {
       return res.status(400).json({ message: "Task label is required" });
     }
 
-    // Teachers may supply a target userId; parents always use their own
-    const targetUserId = (req.user.role === 'teacher' && req.body.userId)
-      ? req.body.userId
-      : req.user._id;
+    const routine = await Routine.findById(routineId);
+    if (!routine) {
+      return res.status(404).json({ message: "Routine not found" });
+    }
+
+    if (!routine.parentId.equals(req.user._id)) {
+      return res.status(403).json({ message: "Not authorized for this routine" });
+    }
 
     const task = { label: label.trim(), mins: Number(mins) || 0 };
 
-    let extraTask = await ExtraTask.findOne({ userId: targetUserId, routineId });
+    let extraTask = await ExtraTask.findOne({
+      routineId,
+      parentId: req.user._id,
+      studentId: routine.studentId
+    });
+
     if (extraTask) {
       extraTask.tasks.push(task);
     } else {
-      extraTask = new ExtraTask({ userId: targetUserId, routineId, tasks: [task] });
+      extraTask = new ExtraTask({
+        routineId,
+        parentId: req.user._id,
+        studentId: routine.studentId,
+        tasks: [task]
+      });
     }
 
     const saved = await extraTask.save();

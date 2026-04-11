@@ -83,7 +83,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -93,6 +93,12 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem('brightsteps_token', data.token);
         const loggedInUser = data.user || data;
+
+        // Ensure studentId exists in the stored user object for legacy support
+        if (loggedInUser.role === 'student' && !loggedInUser.studentId) {
+          loggedInUser.studentId = loggedInUser._id || loggedInUser.id;
+        }
+
         localStorage.setItem('brightsteps_user', JSON.stringify(loggedInUser));
         redirectByRole(loggedInUser.role, navigate);
       } else {
@@ -110,7 +116,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/google', {
+      const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: credentialResponse.credential }),

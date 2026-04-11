@@ -127,7 +127,7 @@ export default function GameHub() {
 
   const fetchGameStats = async (id) => {
     try {
-      const res  = await fetch(`http://localhost:5001/api/progress/${id}`);
+      const res  = await fetch(`/api/progress/${id}`);
       if (!res.ok) return;
       const data = await res.json();
       setGameStats(data);

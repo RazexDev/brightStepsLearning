@@ -50,7 +50,7 @@ export default function ResourceManager() {
   const logProgressAndRefresh = async (activityTitle, type) => {
     try {
       // Send progress data to backend
-      await axios.post('http://localhost:5001/api/progress', {
+      await axios.post('/api/progress', {
         studentName,
         date: new Date(),
         activity: activityTitle,
@@ -63,7 +63,7 @@ export default function ResourceManager() {
       });
 
       // Fetch updated progress and resources
-      const res = await axios.get(`http://localhost:5001/api/resources/recommend/${encodeURIComponent(studentName)}`);
+      const res = await axios.get(`/api/resources/recommend/${encodeURIComponent(studentName)}`);
 
       const newLevel = res.data.currentLevel || 0;
       const newPct = res.data.progressPct || 0;
@@ -105,7 +105,7 @@ export default function ResourceManager() {
     // Function to fetch resources from backend
     const fetchResources = async () => {
       try {
-        const res = await axios.get(`http://localhost:5001/api/resources/recommend/${encodeURIComponent(activeName)}`);
+        const res = await axios.get(`/api/resources/recommend/${encodeURIComponent(activeName)}`);
 
         // Update states with API response
         setResources(res.data.resources || []);

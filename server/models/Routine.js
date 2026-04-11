@@ -1,27 +1,61 @@
-// models/Routine.js
 const mongoose = require("mongoose");
 
-const taskSchema = new mongoose.Schema({
-  label: { type: String, required: true },
-  mins: { type: Number, default: 0 }
-});
+const taskSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true },
+    mins: { type: Number, default: 0 },
+    completed: { type: Boolean, default: false },
+    completedAt: { type: Date, default: null }
+  },
+  { _id: false }
+);
 
-const routineSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  studentName: { type: String },
-  title: { type: String, required: true },
-  goal: String,
-  skillFocus: String,
-  desc: String,
-  type: { type: String, enum: ["adhd","autism"], required: true },
-  cls: { type: String, enum: ["morning","school","bedtime","custom"], required: true },
-  iconEmoji: String,
-  emoji: String,
-  badge: String,
-  tags: [String],
-  defaultTasks: [taskSchema],
-  isDefault: { type: Boolean, default: false },
-  iconBg: String
-}, { timestamps: true });
+const routineSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    category: {
+      type: String,
+      enum: ["morning", "evening", "study", "school", "bedtime", "custom"],
+      required: true
+    },
+    tasks: [taskSchema],
+    goalId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    studentName: { type: String },
+    type: { type: String, default: "general" },
+    desc: { type: String, default: "" },
+    tags: [{ type: String }],
+    iconEmoji: { type: String, default: "📋" },
+    emoji: { type: String, default: "✨" },
+    badge: { type: String, default: "" },
+    iconBg: { type: String, default: "" },
+    sourceTemplateId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Template",
+      default: null
+    },
+    goal: { type: String, default: "" },
+    progress: { type: Number, default: 0 },
+    completed: { type: Boolean, default: false },
+    startedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
+    streakCount: { type: Number, default: 0 },
+    rewards: {
+      starsEarned: { type: Number, default: 0 },
+      badgesEarned: [{ type: String }]
+    }
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model("Routine", routineSchema);
+module.exports =
+  mongoose.models.Routine || mongoose.model("Routine", routineSchema);

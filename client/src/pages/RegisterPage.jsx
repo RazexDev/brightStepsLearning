@@ -100,7 +100,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // 👇 Send the googleToken if it exists
@@ -110,14 +110,18 @@ export default function RegisterPage() {
       if (response.ok) {
         localStorage.setItem('brightsteps_token', data.token);
         const userToSave = data.user || data;
+
+        // Standardize: ensure studentId exists for students
+        if (userToSave.role === 'student' && !userToSave.studentId) {
+          userToSave.studentId = userToSave._id || userToSave.id;
+        }
+
         localStorage.setItem('brightsteps_user', JSON.stringify(userToSave));
         
-        // Modal interception!
         if (data.customId || userToSave.customId) {
           setRegisteredId(data.customId || userToSave.customId);
         } else {
-          // Fallback if missing
-          navigate(role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+          navigate(userToSave.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
         }
       } else {
         setError(data.message || 'Registration failed.');
@@ -134,7 +138,7 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/google', {
+      const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: credentialResponse.credential, role }), 

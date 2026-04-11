@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   },
   parentPin: {
     type: String,
-    required: true,
+    required: false,
     minlength: 4,
     maxlength: 4
   },
@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['parent', 'teacher', 'admin'], 
+    enum: ['parent', 'student', 'teacher', 'admin'], 
     default: 'parent',
   },
 }, { timestamps: true });

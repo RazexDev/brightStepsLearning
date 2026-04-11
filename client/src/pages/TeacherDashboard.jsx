@@ -23,7 +23,7 @@ import { downloadSingleReportPDF } from '../utils/pdfGenerator';
 import html2canvas from 'html2canvas';
 
 /* ── API helpers ─────────────────────────────────── */
-const API = 'http://localhost:5001/api';
+const API = '/api';
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('brightsteps_token')}`,

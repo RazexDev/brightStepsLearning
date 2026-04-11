@@ -43,7 +43,7 @@ export default function LearningHub() {
   const fetchReports = async (name) => {
     try {
       if (!name) return;
-      const res = await axios.get(`http://localhost:5001/api/progress?studentName=${encodeURIComponent(name)}`);
+      const res = await axios.get(`/api/progress?studentName=${encodeURIComponent(name)}`);
       setReports([...res.data].sort((a, b) => new Date(b.date) - new Date(a.date)));
     } catch (err) {
       console.error('Error fetching reports:', err);
@@ -56,7 +56,7 @@ export default function LearningHub() {
 
   const logProgressAndRefresh = async (activityTitle, type) => {
     try {
-      await axios.post('http://localhost:5001/api/progress', {
+      await axios.post('/api/progress', {
         studentName,
         date: new Date(),
         activity: activityTitle,
@@ -69,7 +69,7 @@ export default function LearningHub() {
       });
       
       // Refresh the level and recommendations dynamically
-      const res = await axios.get(`http://localhost:5001/api/resources/recommend/${encodeURIComponent(studentName)}`);
+      const res = await axios.get(`/api/resources/recommend/${encodeURIComponent(studentName)}`);
       const newLevel = res.data.currentLevel || 0;
       const newPct = res.data.progressPct || 0;
 
@@ -102,7 +102,7 @@ export default function LearningHub() {
 
     const fetchRecommendations = async () => {
       try {
-        const res = await axios.get(`http://localhost:5001/api/resources/recommend/${encodeURIComponent(activeName)}`);
+        const res = await axios.get(`/api/resources/recommend/${encodeURIComponent(activeName)}`);
         setResources(res.data.resources || []);
         setCurrentLevel(res.data.currentLevel || 0);
         setProgressPct(res.data.progressPct || 0);
@@ -141,7 +141,7 @@ export default function LearningHub() {
     setPinLoading(true);
     try {
       const user = JSON.parse(localStorage.getItem('brightsteps_user'));
-      const res  = await fetch('http://localhost:5001/api/auth/verify-pin', {
+      const res  = await fetch('/api/auth/verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?._id, pin: pinValue }),

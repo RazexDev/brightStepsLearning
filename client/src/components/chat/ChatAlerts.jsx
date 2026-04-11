@@ -19,7 +19,7 @@ export default function ChatAlerts() {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/alerts/${childId}`);
+      const response = await fetch(`/api/alerts/${childId}`);
       if (response.ok) {
         const data = await response.json();
         setAlerts(data);
@@ -33,7 +33,7 @@ export default function ChatAlerts() {
 
   const markAsResolved = async (alertId) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/alerts/${alertId}/resolve`, {
+      const response = await fetch(`/api/alerts/${alertId}/resolve`, {
         method: 'PATCH'
       });
       

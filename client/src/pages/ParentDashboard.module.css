@@ -258,6 +258,183 @@
   font-size: 0.78rem; font-weight: 800;
 }
 
+
+/* 1. Routine type badge inside cards (e.g. "ADHD", "Autism") */
+.routineTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--pd-r-pill);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--pd-sky-bg);
+  color: var(--pd-sky-dk);
+  border: 1px solid var(--pd-sky);
+  margin-left: 4px;
+}
+
+/* 2. Completed routine overlay badge */
+.completedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px;
+  border-radius: var(--pd-r-pill);
+  font-size: 0.75rem;
+  font-weight: 900;
+  background: var(--pd-sage-bg);
+  color: var(--pd-sage);
+  border: 1px solid var(--pd-sage);
+}
+
+/* 3. AI section placeholder block (subtle lavender call-to-action) */
+.aiPlaceholder {
+  margin-top: 40px;
+  padding: 28px 24px;
+  border-radius: 20px;
+  border: 2px dashed var(--pd-lav);
+  background: var(--pd-lav-bg);
+  text-align: center;
+}
+.aiPlaceholder h3 {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--pd-lav-dk);
+  margin: 8px 0 6px;
+}
+.aiPlaceholder p {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--pd-lav-dk);
+  margin: 0;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+/* ═══════════════════════════════════════════════════════════════
+   ADDITIONS — Append to the END of ParentDashboard.module.css
+   These are the ONLY new CSS classes needed for the upgraded RoutinesTab.
+   All other styles reuse existing classes from the module.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Field label inside forms ── */
+.rtLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--pd-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* ── Child profile card ── */
+.rtChildCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  border-radius: var(--pd-r-card);
+  border: 2px solid rgba(30,16,7,0.06);
+  border-left: 5px solid var(--pd-teal);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--pd-sh);
+}
+
+.rtChildAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--pd-teal), var(--pd-sky));
+  color: white;
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.4rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(61,181,160,0.3);
+}
+
+/* ── Search bar row ── */
+.rtSearchBar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  background: white;
+  border-radius: var(--pd-r-card);
+  border: 2px solid rgba(30,16,7,0.06);
+  box-shadow: var(--pd-sh);
+}
+
+/* ── AI note placeholder at bottom ── */
+.rtAiNote {
+  margin-top: 40px;
+  padding: 24px;
+  border-radius: 18px;
+  border: 2px dashed var(--pd-lav);
+  background: var(--pd-lav-bg);
+  text-align: center;
+}
+
+/* ── Modal overlay ── */
+.rtModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 16, 7, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: rtFadeIn 0.2s ease-out;
+}
+
+@keyframes rtFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal box ── */
+.rtModal {
+  background: var(--pd-paper);
+  border-radius: 24px;
+  border: 2px solid rgba(30,16,7,0.08);
+  box-shadow: 0 24px 80px rgba(30,16,7,0.25);
+  padding: 32px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: rtSlideUp 0.25s ease-out;
+}
+
+@keyframes rtSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive adjustments ── */
+@media (max-width: 640px) {
+  .rtModal { padding: 20px; border-radius: 16px; }
+  .rtChildCard { flex-direction: row; }
+  .rtSearchBar { flex-direction: column; }
+  .rtSearchBar > * { width: 100%; }
+}
+
+
+
 /* ══════════════ RESOURCE CARDS ══════════════ */
 .resourceGrid {
   display: grid;

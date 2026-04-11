@@ -93,12 +93,7 @@ Child details:
 - Name: ${childName || "Child"}
 - Age: ${finalAge || "Unknown"}
 - Disability/support type: ${disabilityType || "general"}
-- Wake-up time: ${wakeUpTime || "not provided"}
-- School time: ${schoolTime || "not provided"}
-- After-school time: ${afterSchoolTime || "not provided"}
-- Meal times: ${mealTimes || [breakfastTime, lunchTime, dinnerTime].filter(Boolean).join(", ") || "not provided"}
-- Study time: ${studyTime || "not provided"}
-- Bedtime: ${finalBedTime || "not provided"}
+- Daily Schedule (Parent's Description): ${payload.scheduleText || "not provided"}
 - Goals: ${finalGoals.length ? finalGoals.join(", ") : "independence and routine consistency"}
 
 Requirements:

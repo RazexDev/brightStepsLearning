@@ -336,7 +336,8 @@ const aiGenerateRoutine = async (req, res) => {
       mealTimes,
       studyTime,
       bedTime,
-      goals
+      goals,
+      scheduleText
     } = req.body;
 
     const generated = await generateRoutine({
@@ -349,7 +350,8 @@ const aiGenerateRoutine = async (req, res) => {
       mealTimes,
       studyTime,
       bedTime,
-      goals
+      goals,
+      scheduleText
     });
 
     return res.status(200).json(generated);

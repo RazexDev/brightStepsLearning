@@ -131,12 +131,7 @@ function RoutinesTab({ childName }) {
   const [aiForm, setAiForm] = React.useState({
     childAge: '',
     disabilityType: '',
-    wakeUpTime: '07:00 AM',
-    schoolTime: '08:30 AM',
-    afterSchoolTime: '03:30 PM',
-    studyTime: '04:30 PM',
-    bedTime: '08:30 PM',
-    mealTimes: 'breakfast 07:30 AM, dinner 06:30 PM',
+    scheduleText: '',
     goals: [],
   });
 
@@ -338,9 +333,7 @@ function RoutinesTab({ childName }) {
         method: 'POST', headers: authHdr(),
         body: JSON.stringify({
           ...aiForm,
-          childName,
-          // split mealTimes if it's a string, or send as is if it's expected to be a string
-          mealTimes: typeof aiForm.mealTimes === 'string' ? aiForm.mealTimes.split(',').map(m => m.trim()) : aiForm.mealTimes,
+          childName
         }),
       });
       const data = await res.json();
@@ -407,6 +400,16 @@ function RoutinesTab({ childName }) {
     });
   }, [routines, searchQuery, filterCategory]);
 
+  const [activeRoutines, doneRoutines] = React.useMemo(() => {
+    const active = [];
+    const done = [];
+    filteredRoutines.forEach(r => {
+      if (r.progress === 100 || r.completed) done.push(r);
+      else active.push(r);
+    });
+    return [active, done];
+  }, [filteredRoutines]);
+
   /* ── HELPERS ────────────────────────────────────── */
   const pctColor = (pct) => pct >= 80 ? 'var(--pd-sage)' : pct >= 50 ? 'var(--pd-amber)' : 'var(--pd-rose)';
   const catEmoji = { morning: '🌅', school: '🏫', study: '📚', evening: '🌆', bedtime: '🌙', custom: '⚙️' };
@@ -416,6 +419,56 @@ function RoutinesTab({ childName }) {
     both:    { bg: 'var(--pd-lav-bg)',    border: 'var(--pd-lav)',    color: 'var(--pd-lav-dk)',    label: '💜 Both' },
     general: { bg: 'var(--pd-sky-bg)',    border: 'var(--pd-sky)',    color: 'var(--pd-sky-dk)',    label: '🌟 General' },
   }[type?.toLowerCase()] || { bg: 'var(--pd-paper2)', border: 'rgba(30,16,7,0.1)', color: 'var(--pd-ink-mid)', label: type });
+
+  /* ── SUB-COMPONENT: Routine Card ── */
+  const RoutineCard = ({ r, isDone }) => {
+    const ts = typeStyle(r.type);
+    const emoji = catEmoji[r.category] || '📋';
+    const completedCount = (r.tasks || []).filter(t => t.completed).length;
+    const totalTasks = (r.tasks || []).length;
+    
+    return (
+      <div className={`${s.routineCard} ${isDone ? s.routineCardDone : ''}`}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <p className={s.routineName}>{emoji} {r.title}</p>
+            <div style={{ display: 'flex', gap: 5, marginTop: 4 }}>
+              <span style={{ background: ts.bg, color: ts.color, border: `1px solid ${ts.border}`, padding: '2px 8px', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 800 }}>{ts.label}</span>
+              {r.goal && <span style={{ background: 'var(--pd-sage-bg)', color: 'var(--pd-sage)', padding: '2px 8px', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 800 }}>🎯 {r.goal}</span>}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button className={s.refreshBtn} style={{ padding: 6 }} onClick={() => openEditForm(r)}><Edit2 size={13}/></button>
+            <button className={s.refreshBtn} style={{ padding: 6, color: 'var(--pd-rose)' }} onClick={() => handleDeleteRoutine(r._id)}><Trash2 size={13}/></button>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--pd-ink-soft)' }}>{completedCount}/{totalTasks} tasks</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: pctColor(r.progress || 0) }}>{r.progress || 0}%</span>
+          </div>
+          <div style={{ background: 'rgba(30,16,7,0.06)', height: 6, borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ width: `${r.progress || 0}%`, height: '100%', background: pctColor(r.progress || 0), transition: 'width 0.5s' }} />
+          </div>
+        </div>
+
+        <div className={s.taskChecklist}>
+          {(r.tasks || []).map((t, i) => (
+            <div key={i} onClick={() => handleToggleTask(r, i)} 
+              className={`${s.checkItem} ${t.completed ? s.checkItemDone : ''}`}>
+              <div className={`${s.checkCircle} ${t.completed ? s.checkCircleDone : ''}`}>
+                {t.completed && <Check size={12} color="white" />}
+              </div>
+              <span className={`${s.checkLabel} ${t.completed ? s.checkLabelDone : ''}`}>
+                {t.label} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>({t.mins}m)</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   /* ═══════════════════════════════════════════════════
      RENDER
@@ -475,60 +528,35 @@ function RoutinesTab({ childName }) {
 
       {loading ? (
         <div className={s.emptyState}><div className={s.emptyIcon}>⏳</div><p>Loading...</p></div>
-      ) : filteredRoutines.length === 0 ? (
+      ) : activeRoutines.length === 0 && doneRoutines.length === 0 ? (
         <div className={s.emptyState}>
           <div className={s.emptyIcon}>📭</div>
           <p>No routines found. Create one below or try AI generation!</p>
         </div>
       ) : (
-        <div className={s.routineGrid} style={{ marginBottom: 32 }}>
-          {filteredRoutines.map(r => {
-            const ts = typeStyle(r.type);
-            const emoji = catEmoji[r.category] || '📋';
-            const completedCount = (r.tasks || []).filter(t => t.completed).length;
-            const totalTasks = (r.tasks || []).length;
-            return (
-              <div key={r._id} className={s.routineCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <p className={s.routineName}>{emoji} {r.title}</p>
-                    <div style={{ display: 'flex', gap: 5, marginTop: 4 }}>
-                      <span style={{ background: ts.bg, color: ts.color, border: `1px solid ${ts.border}`, padding: '2px 8px', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 800 }}>{ts.label}</span>
-                      {r.goal && <span style={{ background: 'var(--pd-sage-bg)', color: 'var(--pd-sage)', padding: '2px 8px', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 800 }}>🎯 {r.goal}</span>}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button className={s.refreshBtn} style={{ padding: 6 }} onClick={() => openEditForm(r)}><Edit2 size={13}/></button>
-                    <button className={s.refreshBtn} style={{ padding: 6, color: 'var(--pd-rose)' }} onClick={() => handleDeleteRoutine(r._id)}><Trash2 size={13}/></button>
-                  </div>
-                </div>
+        <div style={{ marginBottom: 32 }}>
+          {/* ACTIVE SECTION */}
+          {activeRoutines.length > 0 && (
+            <div className={s.routineGrid} style={{ marginBottom: doneRoutines.length > 0 ? 40 : 0 }}>
+              {activeRoutines.map(r => (
+                <RoutineCard key={r._id} r={r} />
+              ))}
+            </div>
+          )}
 
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--pd-ink-soft)' }}>{completedCount}/{totalTasks} tasks</span>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: pctColor(r.progress || 0) }}>{r.progress || 0}%</span>
-                  </div>
-                  <div style={{ background: 'rgba(30,16,7,0.06)', height: 6, borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: `${r.progress || 0}%`, height: '100%', background: pctColor(r.progress || 0), transition: 'width 0.5s' }} />
-                  </div>
-                </div>
-
-                <div className={s.taskChecklist}>
-                  {(r.tasks || []).map((t, i) => (
-                    <div key={i} onClick={() => handleToggleTask(r, i)} 
-                      className={`${s.checkItem} ${t.completed ? s.checkItemDone : ''}`}>
-                      <div className={`${s.checkCircle} ${t.completed ? s.checkCircleDone : ''}`}>
-                        {t.completed && <Check size={12} color="white" />}
-                      </div>
-                      <span className={`${s.checkLabel} ${t.completed ? s.checkLabelDone : ''}`}>
-                        {t.label} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>({t.mins}m)</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
+          {/* DONE SECTION */}
+          {doneRoutines.length > 0 && (
+            <>
+              <div className={s.sectionHeader} style={{ marginTop: activeRoutines.length > 0 ? 20 : 0, marginBottom: 16 }}>
+                <h3 className={s.doneHeading}>✅ Done / Completed Routines</h3>
               </div>
-            );
-          })}
+              <div className={s.routineGrid}>
+                {doneRoutines.map(r => (
+                  <RoutineCard key={r._id} r={r} isDone />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -675,12 +703,25 @@ function RoutinesTab({ childName }) {
              {!aiPreview ? (
                 <form onSubmit={handleAiSubmit}>
                    <div className={s.rtAiStepTitle}>
-                     <span>1️⃣</span> Step 1: Tell us about {childName}
+                     <span>1️⃣</span> Step 1: Tell us about {childName}'s day
+                   </div>
+                   <p className={s.rtLabel} style={{ marginBottom: 12, textTransform: 'none' }}>Describe the daily schedule naturally (e.g., "Wakes up at 7, school starts at 8:30, dinner at 7 PM").</p>
+                   <textarea 
+                      className={s.formInput} 
+                      style={{ width: '100%', minHeight: '120px', marginBottom: 24, padding: '12px', resize: 'vertical' }}
+                      placeholder="Type the schedule here word by word..."
+                      required
+                      value={aiForm.scheduleText}
+                      onChange={e => setAiForm({...aiForm, scheduleText: e.target.value})}
+                   />
+
+                   <div className={s.rtAiStepTitle}>
+                     <span>2️⃣</span> Step 2: Child Details & Support
                    </div>
                    
                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
                       <div>
-                         <label className={s.rtLabel}>Age</label>
+                         <label className={s.rtLabel}>Age (Optional)</label>
                          <input className={s.formInput} type="number" placeholder="e.g. 8" value={aiForm.childAge} onChange={e => setAiForm({...aiForm, childAge: e.target.value})} />
                       </div>
                       <div>
@@ -692,30 +733,6 @@ function RoutinesTab({ childName }) {
                             <option value="both">💜 Both</option>
                             <option value="general">🌟 General</option>
                          </select>
-                      </div>
-                   </div>
- 
-                   <div className={s.rtAiStepTitle}>
-                     <span>2️⃣</span> Step 2: Daily Schedule
-                   </div>
-                   <p className={s.rtLabel} style={{ marginBottom: 12, textTransform: 'none' }}>Enter approximate times to help AI plan the day.</p>
- 
-                   <div className={s.rtAiGrid}>
-                      {[
-                        ['Wake Up', 'wakeUpTime'], 
-                        ['School Start', 'schoolTime'], 
-                        ['Home / After School', 'afterSchoolTime'], 
-                        ['Study / Homework', 'studyTime'],
-                        ['Bedtime', 'bedTime']
-                      ].map(([lbl, key]) => (
-                        <div key={key}>
-                           <label className={s.rtLabel}>{lbl}</label>
-                           <input className={s.formInput} value={aiForm[key]} onChange={e => setAiForm({...aiForm, [key]: e.target.value})} placeholder="e.g. 7:00 AM" />
-                        </div>
-                      ))}
-                      <div>
-                         <label className={s.rtLabel}>Meal Times (Optional)</label>
-                         <input className={s.formInput} value={aiForm.mealTimes} onChange={e => setAiForm({...aiForm, mealTimes: e.target.value})} placeholder="e.g. B: 7:30, D: 6:30" />
                       </div>
                    </div>
  

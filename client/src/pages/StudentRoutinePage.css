@@ -497,4 +497,108 @@
   font-weight: 600;
   color: var(--sr-ink-soft);
   margin-top: 8px;
-}
+}
+
+/* ══ CALMER LAYOUT & SECTIONS ══ */
+.sr-content-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 60px; /* More whitespace between sections */
+}
+
+.sr-done-heading {
+  font-family: 'Baloo 2', cursive;
+  font-size: 2rem;
+  color: var(--teal);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.sr-card-done {
+  opacity: 0.65;
+  filter: grayscale(0.2);
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-color: #E2E8F0 !important;
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+}
+
+.sr-card-done .sr-start-btn {
+  display: none;
+}
+
+/* ══ CELEBRATION ══ */
+.sr-celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  animation: sr-fade-in 0.5s ease-out;
+}
+
+.sr-celebration-content {
+  text-align: center;
+  max-width: 500px;
+  padding: 40px;
+  background: white;
+  border-radius: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  border: 8px solid var(--amber);
+  animation: sr-celebration-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sr-celebration-emojis {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.sr-celebration-title {
+  font-family: 'Baloo 2', cursive;
+  font-size: 3rem;
+  margin: 0;
+  color: var(--amber-dk);
+}
+
+.sr-celebration-subtitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 10px 0;
+}
+
+.sr-celebration-subtext {
+  color: var(--sr-ink-soft);
+  font-weight: 700;
+}
+
+.sr-celebration-stars {
+  position: relative;
+  height: 100px;
+  margin-top: 20px;
+}
+
+.celebration-star, .celebration-heart {
+  position: absolute;
+  color: var(--amber);
+  animation: sr-star-float 2s infinite ease-in-out;
+}
+
+.celebration-star.s1 { left: 10%; top: 20%; color: var(--sky); animation-delay: 0.2s; }
+.celebration-star.s2 { right: 15%; top: 10%; color: var(--lav); animation-delay: 0.5s; }
+.celebration-star.s3 { left: 45%; bottom: 10%; color: var(--rose); animation-delay: 0.8s; }
+.celebration-heart.h1 { right: 45%; top: 40%; color: var(--rose); font-size: 2rem; }
+
+@keyframes sr-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sr-celebration-pop { 
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes sr-star-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(20deg); }
+}
+

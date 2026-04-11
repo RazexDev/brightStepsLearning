@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, Target, Search } from 'lucide-react';
-import { useTilt } from '../hooks/useTilt';
+import { ArrowLeft, Trophy, Target, Search, Star, Heart } from 'lucide-react';
 import './StudentRoutinePage.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || '/api';
@@ -34,16 +33,9 @@ function StarRow({ filled = 0, total = 5 }) {
   );
 }
 
-function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation }) {
-  const { ref, handlers } = useTilt({ max: 4, scale: 1.01, glare: false });
-  
+function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation, isDone }) {
   return (
-    <div 
-      ref={ref} 
-      {...handlers} 
-      className={`sr-card ${routine.category || 'custom'}`}
-      style={{ isolation: 'isolate' }}
-    >
+    <div className={`sr-card ${routine.category || 'custom'} ${isDone ? 'sr-card-done' : ''}`}>
       <div className="sr-card-top">
         <div className="sr-card-header">
           <div className="sr-card-emoji-box">{routine.iconEmoji || routine.emoji || '📋'}</div>
@@ -53,12 +45,14 @@ function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation }
           </div>
         </div>
 
-        <button
-          className={`sr-start-btn ${started ? 'active' : ''}`}
-          onClick={() => onStart(routine._id)}
-        >
-          {started ? '🚀 Doing it!' : '▶️ Start'}
-        </button>
+        {!isDone && (
+          <button
+            className={`sr-start-btn ${started ? 'active' : ''}`}
+            onClick={() => onStart(routine._id)}
+          >
+            {started ? '🚀 Doing it!' : '▶️ Start'}
+          </button>
+        )}
       </div>
 
       {routine.goal && (
@@ -87,7 +81,7 @@ function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation }
               type="checkbox"
               className="sr-checkbox"
               checked={!!task.completed}
-              disabled={!started}
+              disabled={!started && !isDone}
               onChange={(e) => onToggleTask(routine._id, index, e.target.checked)}
             />
             <div className="sr-task-content">
@@ -119,6 +113,25 @@ function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation }
   );
 }
 
+function CelebrationOverlay({ routineTitle }) {
+  return (
+    <div className="sr-celebration-overlay">
+      <div className="sr-celebration-content">
+        <div className="sr-celebration-emojis">🎈 🌟 🎉 🏆 ✨ 🌈</div>
+        <h2 className="sr-celebration-title">AMAZING JOB! 🌟</h2>
+        <p className="sr-celebration-subtitle">You finished <strong>{routineTitle}</strong>!</p>
+        <p className="sr-celebration-subtext">You are a superstar! Keep up the great work! 🚀</p>
+        <div className="sr-celebration-stars">
+           <Star className="celebration-star s1" />
+           <Star className="celebration-star s2" />
+           <Heart className="celebration-heart h1" />
+           <Star className="celebration-star s3" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentRoutinePage() {
   const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +139,7 @@ export default function StudentRoutinePage() {
   const [startedRoutineId, setStartedRoutineId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMotivation, setShowMotivation] = useState(false);
+  const [celebrationRoutineId, setCelebrationRoutineId] = useState(null);
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayName = days[new Date().getDay()];
@@ -177,6 +191,11 @@ export default function StudentRoutinePage() {
       if (completed) {
         setShowMotivation(true);
         setTimeout(() => setShowMotivation(false), 3000);
+
+        if (updated.completed) {
+          setCelebrationRoutineId(updated._id);
+          setTimeout(() => setCelebrationRoutineId(null), 5000);
+        }
       }
     } catch (err) {
       alert('Oops! Could not save progress. Checking connection...');
@@ -186,16 +205,28 @@ export default function StudentRoutinePage() {
   const totalCompleted = useMemo(() => routines.filter((r) => r.completed).length, [routines]);
   const totalStars = useMemo(() => routines.reduce((sum, r) => sum + (r.rewards?.starsEarned || 0), 0), [routines]);
 
-  const filteredRoutines = routines.filter((r) => {
+  const filteredRoutines = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return (
-      r.title.toLowerCase().includes(q) ||
-      (r.category && r.category.toLowerCase().includes(q)) ||
-      (r.tasks && r.tasks.some((t) => t.label.toLowerCase().includes(q)))
-    );
-  });
+    return routines.filter((r) => {
+      return (
+        r.title.toLowerCase().includes(q) ||
+        (r.category && r.category.toLowerCase().includes(q)) ||
+        (r.tasks && r.tasks.some((t) => t.label.toLowerCase().includes(q)))
+      );
+    });
+  }, [routines, searchQuery]);
 
-  const focusRoutine = routines.find((r) => !r.completed);
+  const [activeRoutines, doneRoutines] = useMemo(() => {
+    const active = [];
+    const done = [];
+    filteredRoutines.forEach(r => {
+      if (r.completed) done.push(r);
+      else active.push(r);
+    });
+    return [active, done];
+  }, [filteredRoutines]);
+
+  const focusRoutine = activeRoutines.find((r) => !r.completed);
 
   return (
     <div className="sr-page">
@@ -283,27 +314,60 @@ export default function StudentRoutinePage() {
             <div className="sr-spinner" />
             <p>Gathering your routines...</p>
           </div>
-        ) : routines.length === 0 ? (
+        ) : activeRoutines.length === 0 && doneRoutines.length === 0 ? (
           <div className="sr-empty-state">
             <div className="sr-empty-emoji">📭</div>
             <h3>No routines yet!</h3>
             <p>Ask your parent to set up a new daily schedule for you.</p>
           </div>
         ) : (
-          <div className="sr-grid">
-            {filteredRoutines.map((routine) => (
-              <RoutineCard
-                key={routine._id}
-                routine={routine}
-                started={startedRoutineId === routine._id}
-                onStart={handleStartRoutine}
-                onToggleTask={handleTaskToggle}
-                showMotivation={showMotivation}
-              />
-            ))}
+          <div className="sr-content-stack">
+            {/* ══ ACTIVE ══ */}
+            {activeRoutines.length > 0 && (
+              <div className="sr-active-section">
+                <div className="sr-grid">
+                  {activeRoutines.map((routine) => (
+                    <RoutineCard
+                      key={routine._id}
+                      routine={routine}
+                      started={startedRoutineId === routine._id}
+                      onStart={handleStartRoutine}
+                      onToggleTask={handleTaskToggle}
+                      showMotivation={showMotivation}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ══ DONE ══ */}
+            {doneRoutines.length > 0 && (
+              <div className="sr-done-section">
+                <h3 className="sr-done-heading">✅ Everything Done!</h3>
+                <div className="sr-grid">
+                  {doneRoutines.map((routine) => (
+                    <RoutineCard
+                      key={routine._id}
+                      routine={routine}
+                      started={false}
+                      onStart={() => {}}
+                      onToggleTask={handleTaskToggle}
+                      showMotivation={showMotivation}
+                      isDone
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
+
+      {celebrationRoutineId && (
+        <CelebrationOverlay 
+          routineTitle={routines.find(r => r._id === celebrationRoutineId)?.title || 'Routine'} 
+        />
+      )}
 
       {/* ══ ENCOURAGEMENT ══ */}
       <footer className="sr-footer">

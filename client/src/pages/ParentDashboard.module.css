@@ -933,3 +933,22 @@
 [draggable]:active {
   cursor: grabbing;
 }
+/* ── Done Section and Muted Cards ── */
+.doneHeading {
+  color: var(--pd-sage) !important;
+  font-family: 'Baloo 2', cursive;
+  margin-top: 20px;
+}
+
+.routineCardDone {
+  opacity: 0.7;
+  border-top-color: var(--pd-sage) !important;
+  transform: none !important;
+  cursor: default;
+  background: var(--pd-paper2) !important;
+}
+
+.routineCardDone:hover {
+  transform: none !important;
+  box-shadow: var(--pd-sh) !important;
+}

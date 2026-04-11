@@ -47,7 +47,7 @@ const parentOnly = (req, res, next) => {
  * Student Only Middleware
  */
 const studentOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'student') {
+  if (req.user && (req.user.role === 'student' || req.user.role === 'parent')) {
     next();
   } else {
     res.status(403).json({ message: 'Access denied: student only' });

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, PlayCircle, Star, Trophy, Target } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, Search } from 'lucide-react';
 import { useTilt } from '../hooks/useTilt';
 import './StudentRoutinePage.css';
 
@@ -34,8 +34,8 @@ function StarRow({ filled = 0, total = 5 }) {
   );
 }
 
-function RoutineCard({ routine, started, onStart, onToggleTask }) {
-  const { ref, handlers } = useTilt({ max: 10, scale: 1.02, glare: true });
+function RoutineCard({ routine, started, onStart, onToggleTask, showMotivation }) {
+  const { ref, handlers } = useTilt({ max: 4, scale: 1.01, glare: false });
   
   return (
     <div 
@@ -46,7 +46,7 @@ function RoutineCard({ routine, started, onStart, onToggleTask }) {
     >
       <div className="sr-card-top">
         <div className="sr-card-header">
-          <div className="sr-card-emoji-box">{routine.iconEmoji || '📋'}</div>
+          <div className="sr-card-emoji-box">{routine.iconEmoji || routine.emoji || '📋'}</div>
           <div>
             <h2 className="sr-card-title">{routine.title}</h2>
             <p className="sr-card-meta">{routine.category} · {routine.type}</p>
@@ -60,6 +60,15 @@ function RoutineCard({ routine, started, onStart, onToggleTask }) {
           {started ? '🚀 Doing it!' : '▶️ Start'}
         </button>
       </div>
+
+      {routine.goal && (
+        <div className="sr-card-goal">
+          <Target size={14} style={{ marginRight: '8px' }} />
+          {routine.goal}
+        </div>
+      )}
+
+      {routine.desc && <p className="sr-card-meta" style={{ marginBottom: '16px', textTransform: 'none' }}>{routine.desc}</p>}
 
       <div className="sr-progress-container">
         <div className="sr-progress-header">
@@ -83,7 +92,14 @@ function RoutineCard({ routine, started, onStart, onToggleTask }) {
             />
             <div className="sr-task-content">
               <span className="sr-task-label">{task.label}</span>
-              {task.mins > 0 && <span className="sr-task-time">⏱️ {task.mins}m</span>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {task.completed && showMotivation && (
+                  <span className="sr-motivation-tag" style={{ margin: 0, padding: '2px 8px', fontSize: '0.8rem' }}>
+                    ✨ NICE!
+                  </span>
+                )}
+                {task.mins > 0 && <span className="sr-task-time">⏱️ {task.mins}m</span>}
+              </div>
             </div>
           </label>
         ))}
@@ -108,6 +124,12 @@ export default function StudentRoutinePage() {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState('');
   const [startedRoutineId, setStartedRoutineId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showMotivation, setShowMotivation] = useState(false);
+
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const todayName = days[new Date().getDay()];
+  const todayEmoji = ['☀️', '🌞', '⛅', '🌈', '✨'][new Date().getDay() % 5];
 
   const user = useMemo(() => {
     try {
@@ -151,13 +173,29 @@ export default function StudentRoutinePage() {
       setRoutines((prev) =>
         prev.map((routine) => (routine._id === updated._id ? updated : routine))
       );
+
+      if (completed) {
+        setShowMotivation(true);
+        setTimeout(() => setShowMotivation(false), 3000);
+      }
     } catch (err) {
       alert('Oops! Could not save progress. Checking connection...');
     }
   };
 
-  const totalCompleted = routines.filter((r) => r.completed).length;
-  const totalStars = routines.reduce((sum, r) => sum + (r.rewards?.starsEarned || 0), 0);
+  const totalCompleted = useMemo(() => routines.filter((r) => r.completed).length, [routines]);
+  const totalStars = useMemo(() => routines.reduce((sum, r) => sum + (r.rewards?.starsEarned || 0), 0), [routines]);
+
+  const filteredRoutines = routines.filter((r) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      r.title.toLowerCase().includes(q) ||
+      (r.category && r.category.toLowerCase().includes(q)) ||
+      (r.tasks && r.tasks.some((t) => t.label.toLowerCase().includes(q)))
+    );
+  });
+
+  const focusRoutine = routines.find((r) => !r.completed);
 
   return (
     <div className="sr-page">
@@ -178,20 +216,62 @@ export default function StudentRoutinePage() {
 
         <div className="sr-hero-content">
           <div className="sr-hero-emoji-row">
-            <span>📅</span><span>🌈</span><span>⭐</span>
+            <span>{todayEmoji}</span><span>🌈</span><span>⭐</span>
           </div>
-          <h1 className="sr-title">My Morning & Day!</h1>
-          <p className="sr-subtitle">Let’s crush those routines, {studentName}! 🚀</p>
+          <h1 className="sr-title">{todayEmoji} Today is {todayName}</h1>
+          <p className="sr-subtitle">
+            Here's your routine for today, {studentName}! <br/>
+            <span className="sr-tagline">You're doing great — let's complete one step at a time! 🚀</span>
+          </p>
 
           <div className="sr-stats-row">
             <div className="sr-stat-pill amber">⭐ {totalStars} Stars</div>
             <div className="sr-stat-pill teal">✅ {totalCompleted} Done</div>
-            <div className="sr-stat-pill rose">📋 {routines.length} Today</div>
+            <div className="sr-stat-pill rose">📋 {routines.length} Total</div>
           </div>
         </div>
       </section>
 
       <main className="sr-main">
+        {/* ══ SEARCH ══ */}
+        <div className="sr-search-area">
+          <div className="sr-search-bar">
+            <Search size={20} color="var(--sky)" />
+            <input
+              type="text"
+              placeholder="Search routines or tasks..."
+              className="sr-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* ══ FOCUS SECTION ══ */}
+        {!loading && focusRoutine && !searchQuery && (
+          <section className="sr-focus-section">
+            <div className="sr-focus-label">🌟 Focus for Today</div>
+            <div className="sr-focus-content">
+              <div className="sr-ec-icon" style={{ fontSize: '4rem' }}>{focusRoutine.iconEmoji || focusRoutine.emoji || '🎯'}</div>
+              <div>
+                <h3 style={{ fontFamily: 'Baloo 2', fontSize: '2rem', margin: '0 0 10px' }}>
+                  Let's do this together: <strong>{focusRoutine.title}</strong>
+                </h3>
+                <p style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--sr-ink-mid)' }}>
+                  Just one step at a time, you can do it! ✨
+                </p>
+                <div style={{ marginTop: '20px' }}>
+                  <button
+                    className={`sr-start-btn ${startedRoutineId === focusRoutine._id ? 'active' : ''}`}
+                    onClick={() => handleStartRoutine(focusRoutine._id)}
+                  >
+                    {startedRoutineId === focusRoutine._id ? '🚀 Doing it!' : '▶️ Start Now'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
         {apiError && (
           <div className="sr-error-card">
             <span>⚠️</span> {apiError}
@@ -211,13 +291,14 @@ export default function StudentRoutinePage() {
           </div>
         ) : (
           <div className="sr-grid">
-            {routines.map((routine) => (
+            {filteredRoutines.map((routine) => (
               <RoutineCard
                 key={routine._id}
                 routine={routine}
                 started={startedRoutineId === routine._id}
                 onStart={handleStartRoutine}
                 onToggleTask={handleTaskToggle}
+                showMotivation={showMotivation}
               />
             ))}
           </div>

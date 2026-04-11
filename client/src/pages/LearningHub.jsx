@@ -4,9 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Volume2, PlayCircle, FileText, ExternalLink, LogOut, Sparkles, Download, RefreshCcw, Lock, X, Eye, EyeOff } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { Volume2, FileText, ExternalLink, LogOut, Sparkles, Download, RefreshCcw, Lock, X, Eye, EyeOff } from 'lucide-react';
 import { downloadSingleReportPDF } from '../utils/pdfGenerator';
 import './ResourceManager.css';
 import './Dashboard.css'; 

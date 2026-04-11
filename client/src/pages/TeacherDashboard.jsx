@@ -3,7 +3,7 @@
  * Professional 5-tab interface: My Students | Progress Reports | Resource Library | Messages | Analytics
  * Theme matches the BrightSteps Landing Page (paper/ink/rose/amber/teal palette).
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Users, ClipboardList, BookOpen,

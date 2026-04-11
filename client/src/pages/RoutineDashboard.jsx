@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   Search,
@@ -478,11 +478,10 @@ export default function RoutineDashboard() {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Auth/Role Guard moved after hooks
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== "parent") return <Navigate to="/dashboard" replace />;
+  // loadRoutines, etc are defined here but we move the guard check later
 
-  const loadRoutines = async () => {
+
+  const loadRoutines = React.useCallback(async () => {
     try {
       setLoading(true);
       setApiError("");
@@ -495,32 +494,32 @@ export default function RoutineDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStudentId]);
 
-  const loadTemplates = async () => {
+  const loadTemplates = React.useCallback(async () => {
     try {
       const data = await apiFetch(`/templates?disabilityType=${encodeURIComponent(selectedDisability)}`);
       setTemplates(Array.isArray(data) ? data : []);
     } catch {
       setTemplates([]);
     }
-  };
+  }, [selectedDisability]);
 
-  const loadSummary = async () => {
+  const loadSummary = React.useCallback(async () => {
     try {
       const data = await apiFetch(`/routines/progress/summary?studentId=${selectedStudentId}`);
       setSummary(data);
     } catch {
       setSummary(null);
     }
-  };
+  }, [selectedStudentId]);
 
   useEffect(() => {
     if (!selectedStudentId) return;
     loadRoutines();
     loadTemplates();
     loadSummary();
-  }, [selectedStudentId, selectedDisability]);
+  }, [selectedStudentId, selectedDisability, loadRoutines, loadTemplates, loadSummary]);
 
   const filteredRoutines = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -638,6 +637,10 @@ export default function RoutineDashboard() {
       alert(err.message || "Failed to generate AI routine");
     }
   };
+
+  // Auth/Role Guard
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== "parent") return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="rd-page">

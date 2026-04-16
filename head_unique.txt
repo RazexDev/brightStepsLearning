@@ -1,0 +1,292 @@
+
+--- client/package-lock.json ---
+"node_modules/tailwindcss/node_modules/yaml": {
+"version": "2.8.3",
+"resolved": "https://registry.npmjs.org/yaml/-/yaml-2.8.3.tgz",
+"integrity": "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg==",
+"license": "ISC",
+"optional": true,
+"peer": true,
+"bin": {
+"yaml": "bin.mjs"
+},
+"engines": {
+"node": ">= 14.6"
+},
+"funding": {
+"url": "https://github.com/sponsors/eemeli"
+}
+},
+
+--- client/src/components/ProtectedRoute.jsx ---
+if (!user || !allowedRoles.includes(user.role)) {
+
+--- client/src/components/chat/ChatAlerts.jsx ---
+const response = await fetch(`http://localhost:5001/api/alerts/${childId}`);
+
+--- client/src/components/chat/SparkyBot.jsx ---
+const response = await fetch('http://localhost:5001/api/chat', {
+
+--- client/src/pages/AdminDashboard.jsx ---
+const API_BASE = 'http://localhost:5001/api';
+
+--- client/src/pages/DummyReportTool.jsx ---
+const res = await fetch('http://localhost:5001/api/progress', {
+
+--- client/src/pages/LearningHub.jsx ---
+const res = await axios.get(`http://localhost:5001/api/progress?studentName=${encodeURIComponent(name)}`);
+
+--- client/src/pages/LoginPage.jsx ---
+const response = await fetch('http://localhost:5001/api/auth/login', {
+
+--- client/src/pages/ParentDashboard.jsx ---
+import { downloadSingleReportPDF } from '../utils/pdfGenerator';
+const API = 'http://localhost:5001/api';
+
+--- client/src/pages/RegisterPage.jsx ---
+const response = await fetch('http://localhost:5001/api/auth/register', {
+
+--- client/src/pages/ResourceManager.jsx ---
+await axios.post('http://localhost:5001/api/progress', {
+
+--- client/src/pages/RoutineDashboard.jsx ---
+import React, { useEffect, useState, useMemo } from "react";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
+const token = localStorage.getItem('brightsteps_token');
+const CHILD_NAME = "John";
+{ id:"first",     emoji:"🌟", label:"First Star",  threshold:1  },
+{ id:"five",      emoji:"⭐", label:"5 Stars",      threshold:5  },
+{ id:"ten",       emoji:"🔥", label:"10 Stars",     threshold:10 },
+{ id:"twenty",    emoji:"💪", label:"20 Stars",     threshold:20 },
+{ id:"superstar", emoji:"👑", label:"Superstar",    threshold:50 },
+const CLS_META = {
+morning: { accent:"var(--rose)",  accentDark:"var(--rose-dk)",  accentBg:"var(--rose-bg)",  iconBg:"var(--rose-bg)"  },
+school:  { accent:"var(--sky)",   accentDark:"var(--sky-dk)",   accentBg:"var(--sky-bg)",   iconBg:"var(--sky-bg)"   },
+bedtime: { accent:"var(--sage)",  accentDark:"var(--sage-dk)",  accentBg:"var(--sage-bg)",  iconBg:"var(--sage-bg)"  },
+custom:  { accent:"var(--lav)",   accentDark:"var(--lav-dk)",   accentBg:"var(--lav-bg)",   iconBg:"var(--lav-bg)"   },
+};
+const CLS_META_AUTISM = {
+morning: { accent:"var(--lav)",   accentDark:"var(--lav-dk)",   accentBg:"var(--lav-bg)",   iconBg:"var(--lav-bg)"   },
+school:  { accent:"var(--amber)", accentDark:"var(--amber-dk)", accentBg:"var(--amber-bg)", iconBg:"var(--amber-bg)" },
+bedtime: { accent:"var(--sky)",   accentDark:"var(--sky-dk)",   accentBg:"var(--sky-bg)",   iconBg:"var(--sky-bg)"   },
+custom:  { accent:"var(--lav)",   accentDark:"var(--lav-dk)",   accentBg:"var(--lav-bg)",   iconBg:"var(--lav-bg)"   },
+};
+function getMeta(type, cls) {
+return type==="autism" ? (CLS_META_AUTISM[cls]||CLS_META_AUTISM.custom) : (CLS_META[cls]||CLS_META.custom);
+const ICON_OPTIONS = ["☀️","🌙","🎒","📚","🌸","🧩","💙","🏃","🎨","🍎","🚿","🎵","💤","🌿","📖"];
+const TYPE_OPTIONS = [{ value:"adhd", label:"⚡ ADHD" }, { value:"autism", label:"🧩 Autism" }];
+const CLS_OPTIONS  = [{ value:"morning",label:"🌅 Morning" },{ value:"school",label:"🎒 After School" },{ value:"bedtime",label:"🌙 Bedtime" },{ value:"custom",label:"✨ Custom" }];
+const DEFAULT_ADHD_ROUTINES = [
+{ _id:"adhd-1", cls:"morning", type:"adhd", isDefault:true, emoji:"🌅", iconEmoji:"☀️", title:"ADHD Morning Routine",     goal:"Build independent morning skills",         tags:["Self-Care","Focus","Morning"],  badge:"Daily Must!",   defaultTasks:[{label:"Wake Up with Alarm",mins:2},{label:"Brush Teeth",mins:3},{label:"Wash Face",mins:2},{label:"Get Dressed",mins:5},{label:"Eat Breakfast",mins:10}] },
+{ _id:"adhd-2", cls:"school",  type:"adhd", isDefault:true, emoji:"🎒", iconEmoji:"📚", title:"ADHD After School Routine", goal:"Transition smoothly from school to home",  tags:["Homework","Snack","Focus"],    badge:null,            defaultTasks:[{label:"Put away school bag",mins:2},{label:"Healthy snack",mins:10},{label:"Complete homework",mins:30},{label:"Free play time",mins:20}] },
+{ _id:"adhd-3", cls:"bedtime", type:"adhd", isDefault:true, emoji:"🌙", iconEmoji:"🌙", title:"ADHD Bedtime Routine",      goal:"Wind down for restful sleep",              tags:["Sleep","Calm","Self-Care"],    badge:"Sweet Dreams!", defaultTasks:[{label:"Take a shower",mins:10},{label:"Put on pyjamas",mins:3},{label:"Read a book",mins:15},{label:"Lights off & sleep",mins:0}] },
+const DEFAULT_AUTISM_ROUTINES = [
+{ _id:"aut-1",  cls:"morning", type:"autism",isDefault:true, emoji:"🌅", iconEmoji:"🌸", title:"Autism Morning Routine",     goal:"Structured morning independence",           tags:["Structure","Self-Care","Morning"],badge:"Daily Must!",   defaultTasks:[{label:"Wake Up with Alarm",mins:2},{label:"Brush Teeth",mins:3},{label:"Wash Face",mins:2},{label:"Get Dressed",mins:5},{label:"Eat Breakfast",mins:10}] },
+{ _id:"aut-2",  cls:"school",  type:"autism",isDefault:true, emoji:"🎒", iconEmoji:"🧩", title:"Autism After School Routine",goal:"Predictable transition from school",        tags:["Structure","Sensory","Calm"],   badge:null,            defaultTasks:[{label:"Put away school bag",mins:2},{label:"Sensory break",mins:15},{label:"Healthy snack",mins:10},{label:"Complete homework",mins:30}] },
+{ _id:"aut-3",  cls:"bedtime", type:"autism",isDefault:true, emoji:"🌙", iconEmoji:"💙", title:"Autism Bedtime Routine",     goal:"Calm, predictable end to the day",         tags:["Structure","Calm","Sleep"],    badge:"Sweet Dreams!", defaultTasks:[{label:"Warm shower",mins:10},{label:"Put on pyjamas",mins:3},{label:"Quiet activity",mins:15},{label:"Lights off & sleep",mins:0}] },
+function generateReportPDF({ totalStars, completedRoutines, earnedBadges }) {
+const date = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+const nextBadge = BADGES.find((b) => totalStars < b.threshold);
+const nextTxt   = nextBadge ? `Earn <strong>${nextBadge.threshold - totalStars} more ⭐</strong> to unlock ${nextBadge.emoji} <strong>${nextBadge.label}</strong>` : "🏆 All badges earned!";
+const badgeRows = BADGES.map((b) => { const earned = totalStars >= b.threshold; return `<tr class="${earned?"earned-row":"locked-row"}"><td>${earned?b.emoji:"🔒"}&nbsp; ${b.label}</td><td class="center">${b.threshold}★</td><td class="center ${earned?"status-earned":"status-locked"}">${earned?"✅ Earned":"Locked"}</td></tr>`; }).join("");
+
+--- client/src/pages/StudentDashboard.jsx ---
+/* ─────────────────────────────────────────
+DATA
+───────────────────────────────────────── */
+to:      '/routines',
+cls:     'card-routine',
+emoji:   '📅',
+title:   'My Routine',
+desc:    "See what's happening today!",
+tags:    ['Schedule', 'Tasks'],
+btnTxt:  "Let's Go!",
+to:      '/games',
+cls:     'card-games',
+emoji:   '🎮',
+title:   'Play Games',
+desc:    'Fun games that help you learn.',
+tags:    ['Memory', 'Puzzles'],
+btnTxt:  'Play Now!',
+to:      '/manage-resources',
+cls:     'card-progress',
+emoji:   '📚',
+title:   'Resources',
+desc:    'Explore learning materials made just for you!',
+tags:    ['Videos', 'PDFs'],
+btnTxt:  'Explore!',
+/* ─────────────────────────────────────────
+HIGHLIGHT MATCH
+───────────────────────────────────────── */
+
+--- client/src/pages/TeacherDashboard.jsx ---
+const API = 'http://localhost:5001/api';
+
+--- client/src/pages/games/EmotionExplorer.jsx ---
+await fetch('http://localhost:5001/api/progress', {
+
+--- client/src/pages/games/FocusMatch.jsx ---
+const response = await fetch('http://localhost:5001/api/progress', {
+
+--- client/src/pages/games/GameHub.jsx ---
+const res  = await fetch(`http://localhost:5001/api/progress/${id}`);
+
+--- client/src/pages/games/ShapeSort.jsx ---
+await fetch('http://localhost:5001/api/progress', {
+
+--- client/src/utils/pdfGenerator.js ---
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+* Generates and downloads a formatted PDF for a single student progress report.
+* @param {Object} report - The progress report object from the database.
+* @param {string} title - The title rendered at the top of the PDF document.
+export const downloadSingleReportPDF = (report, title = 'BrightSteps Progress Report') => {
+const dateObj = report.date ? new Date(report.date) : new Date();
+const dateTxt = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+const moodMap = { 'Happy': '😊', 'Excited': '🤩', 'Neutral': '😐', 'Tired': '😴', 'Frustrated': '😤' };
+const moodEmoji = moodMap[report.mood] || '😐';
+const student = report.studentName || 'Student';
+const activity = report.activity || 'Learning Activity';
+const mood = report.mood || 'N/A';
+const stars = report.stars || 0;
+const safeNotes = report.notes ? report.notes.replace(/\n/g, '<br/>') : 'No teacher notes provided for this session.';
+<html lang="en">
+<meta charset="UTF-8"/>
+<title>${title} — ${student}</title>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+@page { margin: 20mm 18mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family:'Nunito',sans-serif; background:#f8fdfc; color:#1e293b; font-size:14px; }
+.page        { max-width:680px; margin:0 auto; padding:32px; }
+/* Header */
+.report-header {
+background: linear-gradient(135deg, #fff0e8 0%, #e8faf7 50%, #e0f5ff 100%);
+border-radius:20px; padding:28px 32px; margin-bottom:28px;
+display:flex; align-items:center; gap:18px;
+border: 2px solid rgba(94,207,186,0.3);
+.report-header .icon   { font-size:3.2rem; line-height:1; }
+.report-header h1      { font-size:1.55rem; font-weight:900; color:#1e293b; margin-bottom:4px; }
+.report-header .for-txt{ font-size:0.88rem; font-weight:700; color:#4a6074; }
+.report-header .date   { font-size:0.78rem; font-weight:700; color:#94a3b8; margin-top:3px; }
+/* Stats pills */
+.pills { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:28px; }
+.pill  { border-radius:14px; padding:18px 12px; text-align:center; border:2px solid; }
+.pill strong { display:block; font-size:1.6rem; font-weight:900; line-height:1.2; }
+.pill small  { font-size:0.72rem; font-weight:800; color:#4a6074; display:block; margin-top:4px; }
+.pill.p-green { background:#eafff1; border-color:#4ade80; }
+.pill.p-sky   { background:#e0f5ff; border-color:#38bdf8; }
+.pill.p-peach { background:#fff0e8; border-color:#f4956a; }
+/* Section heading */
+.section-heading {
+font-size:1rem; font-weight:900; color:#1e293b;
+margin:24px 0 12px; display:flex; align-items:center; gap:8px;
+.section-heading::after {
+content:''; flex:1; height:2px; background:rgba(94,207,186,0.25); border-radius:2px;
+/* Content Box */
+.content-box {
+background: #ffffff; border-radius: 14px; padding: 20px;
+border: 2px solid #e2e8f0; font-size: 0.95rem; line-height: 1.6; color:#334155;
+/* Footer */
+.report-footer {
+text-align:center; margin-top:36px; padding-top:20px;
+border-top:2px dashed rgba(94,207,186,0.3);
+font-size:0.78rem; font-weight:700; color:#94a3b8;
+<div class="page">
+<div class="report-header">
+<div>
+<h1>${title}</h1>
+<p class="for-txt">for <strong>${student}</strong></p>
+<p class="date">Generated on ${dateTxt}</p>
+<div class="pills">
+<div class="content-box">
+${safeNotes}
+<div class="report-footer">
+BrightSteps Official Record &nbsp;·&nbsp; Keep shining, ${student}! 🌟
+<script>window.onload = () => { setTimeout(() => window.print(), 400); }</script>
+const blob = new Blob([html], { type: "text/html" });
+const url = URL.createObjectURL(blob);
+const win = window.open(url, "_blank");
+if (win) win.onafterprint = () => URL.revokeObjectURL(url);
+};
+
+--- package-lock.json ---
+"name": "brightStepsLearning",
+
+--- server/controllers/extraTaskController.js ---
+/*
+
+--- server/models/ExtraTask.js ---
+});
+
+--- server/models/Routine.js ---
+// models/Routine.js
+});
+goal: String,
+skillFocus: String,
+desc: String,
+iconEmoji: String,
+emoji: String,
+badge: String,
+tags: [String],
+defaultTasks: [taskSchema],
+isDefault: { type: Boolean, default: false },
+iconBg: String
+
+--- server/models/User.js ---
+required: true,
+
+--- server/package.json ---
+"main": "index.js",
+
+--- server/routes/routines.js ---
+const { protect } = require("../middleware/authMiddleware");
+router.use(protect); // All routine endpoints require a valid JWT
+router.get("/", getRoutines);
+router.post("/", createRoutine);
+router.put("/:id", updateRoutine);
+router.delete("/:id", deleteRoutine);
+
+--- server/seedTemplates.js ---
+const dns = require("dns");
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+dns.setDefaultResultOrder("ipv4first");
+const RoutineTemplate = require("./models/RoutineTemplate");
+const Child = require("./models/Child");
+"mongodb+srv://raze_db_user:lock20123@cluster0.q6sbadu.mongodb.net/brightSteps?retryWrites=true&w=majority";
+mongoose.connect(MONGO_URI, { family: 4 })
+.then(() => console.log("✅ MongoDB connected"))
+.catch(err => console.error(err));
+await RoutineTemplate.deleteMany();
+await Child.deleteMany();
+const adhdTemplate = new RoutineTemplate({
+title: "ADHD Morning Routine",
+conditionType: "ADHD",
+independenceGoal: "Develop independent morning skills",
+skillFocus: ["Self-care","Task initiation","Focus building"],
+difficultyLevel: "Beginner",
+activities: [
+{ activityName: "Wake Up with Alarm", category: "Routine", duration: 2, order: 1 },
+{ activityName: "Brush Teeth", category: "Self Care", duration: 3, order: 2 },
+{ activityName: "Wash Face", category: "Self Care", duration: 2, order: 3 },
+{ activityName: "Get Dressed", category: "Self Care", duration: 5, order: 4 },
+{ activityName: "Eat Breakfast", category: "Health", duration: 10, order: 5 }
+const autismTemplate = new RoutineTemplate({
+title: "Autism Morning Routine",
+conditionType: "AUTISM",
+independenceGoal: "Structured morning independence",
+skillFocus: ["Self-care","Routine adherence","Task sequencing"],
+difficultyLevel: "Beginner",
+activities: [
+{ activityName: "Wake Up with Alarm", category: "Routine", duration: 2, order: 1 },
+{ activityName: "Brush Teeth", category: "Self Care", duration: 3, order: 2 },
+{ activityName: "Wash Face", category: "Self Care", duration: 2, order: 3 },
+{ activityName: "Get Dressed", category: "Self Care", duration: 5, order: 4 },
+{ activityName: "Eat Breakfast", category: "Health", duration: 10, order: 5 }
+const child1 = new Child({ name: "John", conditionType: "ADHD" });
+const child2 = new Child({ name: "Emma", conditionType: "AUTISM" });
+await RoutineTemplate.insertMany([adhdTemplate, autismTemplate]);
+await Child.insertMany([child1, child2]);
+console.log("✅ Seed complete");
+
+--- server/server.js ---
+// Import Routes

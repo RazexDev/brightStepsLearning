@@ -47,8 +47,39 @@ router.post('/', async (req, res) => {
     }
 
     // ── TEACHER MANUAL REPORT FLOW ──
-    const { studentName, date, activity, mood, notes, avatar, stars, totalMoves, completionTime, gameName } = req.body;
-    const newReport = new Progress({ studentName, date, activity, mood, notes, avatar, stars, totalMoves, completionTime, gameName });
+    const {
+      studentName, date, activity, mood, notes, avatar,
+      skillArea, engagementLevel, progressLevel, attendanceStatus,
+      sessionDuration, recommendations,
+      // game telemetry that may come from /auto or teacher-linked games
+      stars, totalMoves, completionTime, gameName,
+    } = req.body;
+
+    // Validate required teacher fields
+    if (!studentName || !date || !mood) {
+      return res.status(400).json({ message: 'studentName, date and mood are required' });
+    }
+
+    const newReport = new Progress({
+      studentName,
+      date,
+      activity: activity || '',
+      mood,
+      notes:            notes            || '',
+      avatar:           avatar           || '👦',
+      skillArea:        skillArea        || '',
+      engagementLevel:  engagementLevel  || '',
+      progressLevel:    progressLevel    || '',
+      attendanceStatus: attendanceStatus || '',
+      sessionDuration:  sessionDuration ? Number(sessionDuration) : null,
+      recommendations:  recommendations  || '',
+      // game fields
+      gameName:       gameName       || '',
+      stars:          Number(stars)          || 0,
+      totalMoves:     Number(totalMoves)     || 0,
+      completionTime: Number(completionTime) || 0,
+    });
+
     const savedReport = await newReport.save();
     res.status(201).json(savedReport);
   } catch (err) {
@@ -103,6 +134,17 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Report deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT — update a report
+router.put('/:id', async (req, res) => {
+  try {
+    const updatedReport = await Progress.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedReport) return res.status(404).json({ message: 'Report not found' });
+    res.json(updatedReport);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 

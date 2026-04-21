@@ -55,6 +55,7 @@ app.use('/api/resources', require('./routes/resourceRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/flags', require('./routes/chatRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/skills', require('./routes/skillAreaRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 
 // Start Server

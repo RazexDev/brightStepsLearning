@@ -21,6 +21,12 @@ const ProgressSchema = new mongoose.Schema(
     },
     notes:  { type: String, default: '', trim: true },
     avatar: { type: String, default: '👧' },
+    skillArea: { type: String, trim: true },
+    engagementLevel: { type: String, trim: true },
+    progressLevel: { type: String, trim: true },
+    attendanceStatus: { type: String, trim: true },
+    sessionDuration: { type: Number },
+    recommendations: { type: String, trim: true },
 
     // ── Game Telemetry Fields ──
     childId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

@@ -1022,3 +1022,102 @@
   background: var(--pd-paper2) !important;
   border-top-color: var(--pd-ink-soft) !important;
 }
+
+/* ══════════════ ANALYTICS TAB ══════════════ */
+
+/* The global wa-* classes (used by className="wa-...") are defined below
+   as CSS Modules classes and referenced via s.waXxx in JSX.
+   However, AnalyticsTab uses plain className strings since they are not
+   critical-path scoped. We export them as :global here. */
+
+:global(.wa-section-title) {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--pd-ink);
+  margin-bottom: 16px;
+  padding-left: 4px;
+  border-left: 4px solid var(--pd-teal);
+  padding-left: 12px;
+}
+
+:global(.wa-stats-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+:global(.wa-stat-box) {
+  background: white;
+  border: 1.5px solid rgba(30,16,7,0.07);
+  border-radius: 16px;
+  padding: 18px 14px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(30,16,7,0.06);
+  transition: transform 0.18s;
+}
+:global(.wa-stat-box:hover) { transform: translateY(-3px); }
+
+:global(.wa-stat-val) {
+  font-family: 'Baloo 2', cursive;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--pd-sky-dk);
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+
+:global(.wa-stat-label) {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--pd-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:global(.wa-chart-card) {
+  background: white;
+  border-radius: 16px;
+  padding: 22px 24px;
+  border: 1.5px solid rgba(30,16,7,0.07);
+  box-shadow: 0 4px 12px rgba(30,16,7,0.06);
+}
+
+:global(.wa-chart-title) {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pd-ink);
+  margin: 0 0 16px;
+}
+
+/* Weekly timeline (used in ProgressTab) */
+:global(.wa-timeline-title) {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1rem; font-weight: 700;
+  color: var(--pd-ink); margin: 0 0 16px;
+}
+:global(.wa-timeline) {
+  display: flex; flex-direction: column; gap: 12px;
+}
+:global(.wa-timeline-day) {
+  display: flex; gap: 16px; align-items: center;
+  padding: 12px; background: var(--pd-teal-bg);
+  border-radius: 12px; border-left: 4px solid var(--pd-teal);
+}
+:global(.wa-day-label) {
+  font-weight: 800; color: var(--pd-ink); min-width: 60px;
+}
+:global(.wa-day-activities) {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+:global(.wa-day-activity-badge) {
+  background: white; border: 1.5px solid var(--pd-teal);
+  color: var(--pd-teal-dk); padding: 4px 12px;
+  border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+}
+:global(.weekly-analytics-card) {
+  background: white; border-radius: 16px; padding: 24px;
+  box-shadow: 0 4px 12px rgba(30,16,7,0.05); margin-bottom: 32px;
+  border: 1.5px solid rgba(30,16,7,0.07);
+}

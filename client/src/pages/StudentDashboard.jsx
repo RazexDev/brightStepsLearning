@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, ChevronRight, Search, X, Lock } from 'lucide-react';
+import { LogOut, ChevronRight, Search, X, Lock, Star, Zap, CalendarCheck, ListChecks } from 'lucide-react';
 import './StudentDashboard.css';
 import MagicCanvas from '../components/MagicCanvas';
 import CursorTrail from '../components/CursorTrail';
@@ -77,6 +77,29 @@ export default function StudentDashboard() {
   const [showParentModal, setShowParentModal] = useState(false);
   const [parentPin, setParentPin] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // ── Weekly stats ──────────────────────────────────────────
+  const [weekStats, setWeekStats] = useState({
+    stars: 0, streak: 0, routinesDone: 0, tasksDone: 0,
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem('brightsteps_token');
+    if (!token) return;
+    fetch(`${API_BASE}/routines/student`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const stars   = data.reduce((s, r) => s + (r.rewards?.starsEarned || 0), 0);
+        const done    = data.filter((r) => r.completed).length;
+        const tasks   = data.reduce((s, r) => s + (r.tasks?.filter((t) => t.completed).length || 0), 0);
+        const streak  = done > 3 ? 3 : done;
+        setWeekStats({ stars, streak, routinesDone: done, tasksDone: tasks });
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const userString = localStorage.getItem('brightsteps_user');
@@ -360,6 +383,23 @@ export default function StudentDashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── THIS WEEK STRIP ── */}
+      <div className="week-strip">
+        {[
+          { icon: <Star size={20} />,         bg: '⭐', color: 'amber', label: 'Stars',          value: weekStats.stars },
+          { icon: <Zap size={20} />,          bg: '⚡', color: 'rose',  label: 'Day Streak',     value: `${weekStats.streak}d` },
+          { icon: <CalendarCheck size={20} />, bg: '📅', color: 'teal',  label: 'Routines Done',  value: weekStats.routinesDone },
+          { icon: <ListChecks size={20} />,   bg: '✅', color: 'sky',   label: 'Tasks Done',     value: weekStats.tasksDone },
+        ].map((stat, i) => (
+          <div key={i} className={`ws-card ws-${stat.color}`}>
+            <span className="ws-bg-icon" aria-hidden="true">{stat.bg}</span>
+            <div className="ws-icon">{stat.icon}</div>
+            <strong className="ws-value">{stat.value}</strong>
+            <span className="ws-label">{stat.label}</span>
+          </div>
+        ))}
       </div>
 
       <main className="dashboard-content">

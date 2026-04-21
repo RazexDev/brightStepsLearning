@@ -121,11 +121,26 @@ router.get('/teacher-summary', protect, async (req, res) => {
     const resources = await Resource.find({ createdAt: { $gte: startDate, $lte: endDate } }).sort({ createdAt: -1 });
 
     // ══════════════════════════════════════════
-    //  SECTION 1: Report Activity
-    //  Source: teacherReports (studentName + mood + activity)
+    //  SECTION 1: Unified Activity Aggregation
+    //  Source: teacherReports + gameDocs
     // ══════════════════════════════════════════
 
     const byStudent = {};
+    // Seed with all assigned students so they always show up
+    students.forEach(s => {
+      byStudent[s.name] = {
+        studentName: s.name,
+        totalReports: 0,
+        totalGameTime: 0,
+        activeDates: new Set(),
+        moods: {},
+        activities: new Set(),
+        gameReports: 0,
+        totalStars: 0,
+      };
+    });
+
+    // Process Teacher-Authored Reports
     teacherReports.forEach(r => {
       const key = r.studentName || 'Unknown';
       if (!byStudent[key]) {
@@ -142,14 +157,38 @@ router.get('/teacher-summary', protect, async (req, res) => {
       }
       const entry = byStudent[key];
       entry.totalReports += 1;
-      entry.activeDates.add(r.date.toISOString().split('T')[0]);
+      if (r.date) entry.activeDates.add(new Date(r.date).toISOString().split('T')[0]);
       if (r.mood) entry.moods[r.mood] = (entry.moods[r.mood] || 0) + 1;
       if (r.activity) entry.activities.add(r.activity);
+      
+      // If the teacher report contains game data (manual game report)
       if (r.gameName) {
         entry.gameReports += 1;
         entry.totalGameTime += r.completionTime || 0;
         entry.totalStars += r.stars || 0;
       }
+    });
+
+    // Process Automated Game Docs
+    gameDocs.forEach(r => {
+      const key = r.studentName || 'Unknown';
+      if (!byStudent[key]) {
+        byStudent[key] = {
+          studentName: key,
+          totalReports: 0,
+          totalGameTime: 0,
+          activeDates: new Set(),
+          moods: {},
+          activities: new Set(),
+          gameReports: 0,
+          totalStars: 0,
+        };
+      }
+      const entry = byStudent[key];
+      entry.gameReports += 1;
+      entry.totalGameTime += r.completionTime || 0;
+      entry.totalStars += r.stars || 0;
+      if (r.date) entry.activeDates.add(new Date(r.date).toISOString().split('T')[0]);
     });
 
     const totalDays = period === 'monthly' ? 30 : 7;
@@ -244,17 +283,21 @@ router.get('/teacher-summary', protect, async (req, res) => {
       .filter(([, v]) => v > 0)
       .map(([name, value]) => ({ name, value }));
 
-    // Time spent per game
+    // Time spent per game (Unified)
     const gameTimeBuckets = {};
     gameDocs.forEach(r => {
       if (!r.gameName) return;
       gameTimeBuckets[r.gameName] = (gameTimeBuckets[r.gameName] || 0) + (r.completionTime || 0);
     });
+    teacherReports.forEach(r => {
+      if (!r.gameName) return;
+      gameTimeBuckets[r.gameName] = (gameTimeBuckets[r.gameName] || 0) + (r.completionTime || 0);
+    });
     const gameTimeData = Object.entries(gameTimeBuckets).map(([name, total]) => ({ name, total }));
 
-    // Plays & moves per game
+    // Plays & moves per game (Unified)
     const gamePerf = {};
-    gameDocs.forEach(r => {
+    const processGameData = (r) => {
       if (!r.gameName) return;
       if (!gamePerf[r.gameName]) {
         gamePerf[r.gameName] = { name: r.gameName, plays: 0, totalMoves: 0, totalStars: 0 };
@@ -262,7 +305,9 @@ router.get('/teacher-summary', protect, async (req, res) => {
       gamePerf[r.gameName].plays      += 1;
       gamePerf[r.gameName].totalMoves += r.totalMoves || 0;
       gamePerf[r.gameName].totalStars += r.stars || 0;
-    });
+    };
+    gameDocs.forEach(processGameData);
+    teacherReports.forEach(processGameData);
     const gamePerformance = Object.values(gamePerf);
 
     // Leaderboard: top 5 by stars then fastest time
@@ -290,7 +335,8 @@ router.get('/teacher-summary', protect, async (req, res) => {
       ...teacherReports.map(r => r.studentName).filter(Boolean),
       ...gameDocs.map(r => r.studentName).filter(s => s && s !== 'Unknown'),
     ]);
-    const totalGamePlayTime = gameDocs.reduce((sum, r) => sum + (r.completionTime || 0), 0);
+    const totalGamePlayTime = reportsByStudent.reduce((sum, r) => sum + (r.totalGameTime || 0), 0);
+    const totalGamePlays    = reportsByStudent.reduce((sum, r) => sum + (r.gameReports || 0), 0);
 
     const summary = {
       totalStudents:          students.length,
@@ -299,7 +345,7 @@ router.get('/teacher-summary', protect, async (req, res) => {
       totalActivities:        new Set(teacherReports.map(r => r.activity).filter(Boolean)).size,
       totalResources:         resources.length,
       totalGamePlayTime,
-      totalGamePlays:         gameDocs.length,
+      totalGamePlays,
     };
 
     res.json({
@@ -321,6 +367,155 @@ router.get('/teacher-summary', protect, async (req, res) => {
     });
   } catch (err) {
     console.error('Analytics error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * GET /api/analytics/weekly
+ * Parent Portal - Weekly Analytics
+ */
+router.get('/weekly', protect, async (req, res) => {
+  try {
+    const studentName = req.query.studentName;
+    if (!studentName) {
+      return res.status(400).json({ message: 'studentName is required' });
+    }
+
+    // Date range: last 7 days
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setHours(23, 59, 59, 999);
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - 6);
+    startDate.setHours(0, 0, 0, 0);
+
+    const reports = await Progress.find({
+      studentName,
+      date: { $gte: startDate, $lte: endDate }
+    }).sort({ date: 1 }).lean();
+
+    const moodsCount = {};
+    const activityCounts = {};
+    const reportsByDay = {};
+
+    reports.forEach(r => {
+      // Moods
+      if (r.mood) moodsCount[r.mood] = (moodsCount[r.mood] || 0) + 1;
+      
+      // Activities
+      if (r.activity) activityCounts[r.activity] = (activityCounts[r.activity] || 0) + 1;
+
+      // Group by day
+      const day = new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' });
+      if (!reportsByDay[day]) reportsByDay[day] = [];
+      reportsByDay[day].push(r);
+    });
+
+    let mostFrequentActivity = '';
+    let maxCount = 0;
+    for (const [act, count] of Object.entries(activityCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostFrequentActivity = act;
+      }
+    }
+
+    const totalHappyExcited = (moodsCount['Happy'] || 0) + (moodsCount['Excited'] || 0);
+
+    res.json({
+      totalReportsThisWeek: reports.length,
+      totalActivitiesThisWeek: Object.keys(activityCounts).length,
+      moodsCount,
+      happyExcitedCount: totalHappyExcited,
+      activityNames: Object.keys(activityCounts),
+      reportsByDay,
+      mostFrequentActivity
+    });
+  } catch (err) {
+    console.error('Weekly Analytics error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * GET /api/analytics/parent-summary
+ * Parent Portal - Analytics (Games, Reports, Weekly/Monthly Comparison)
+ */
+router.get('/parent-summary', protect, async (req, res) => {
+  try {
+    const studentName = req.query.studentName;
+    if (!studentName) {
+      return res.status(400).json({ message: 'studentName is required' });
+    }
+
+    const now = new Date();
+
+    // Weekly bounds (last 7 days)
+    const endDate = new Date(now);
+    endDate.setHours(23, 59, 59, 999);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - 6);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Monthly bounds (last 30 days)
+    const startOfMonth = new Date(now);
+    startOfMonth.setDate(now.getDate() - 29);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Fetch ALL teacher-authored progress reports for this student in the last 30 days
+    const monthlyReports = await Progress.find({
+      studentName,
+      date: { $gte: startOfMonth, $lte: endDate }
+    }).lean();
+
+    const weeklyReports = monthlyReports.filter(r => new Date(r.date) >= startOfWeek);
+
+    // Try to find games via native collection (game docs use childId)
+    let weeklyGames = [];
+    let monthlyGames = [];
+    try {
+      const rawCollection = Progress.collection;
+      const studentUser = await User.findOne({ name: studentName }).lean();
+      if (studentUser) {
+        const childId = studentUser._id;
+        const allGameDocs = await rawCollection.find({
+          date: { $gte: startOfMonth, $lte: endDate },
+          gameName: { $exists: true, $ne: '' },
+          $or: [
+            { childId: childId },
+            { studentName: studentName }
+          ]
+        }).toArray();
+        monthlyGames = allGameDocs;
+        weeklyGames = allGameDocs.filter(r => new Date(r.date) >= startOfWeek);
+      }
+    } catch (gameErr) {
+      console.warn('Game fetch error (non-fatal):', gameErr.message);
+    }
+
+    const buildStats = (reports, games) => ({
+      totalActivities: reports.length,
+      gamesPlayed:     games.length,
+      totalStars:      reports.reduce((s, r) => s + (r.stars || 0), 0) +
+                       games.reduce((s, g) => s + (g.stars || 0), 0),
+      gameTime:        games.reduce((s, g) => s + (g.completionTime || 0), 0),
+      uniqueActivities: [...new Set(reports.map(r => r.activity).filter(Boolean))].length,
+      happyExcitedCount: reports.filter(r => r.mood === 'Happy' || r.mood === 'Excited').length,
+      topMood: (() => {
+        const mc = {};
+        reports.forEach(r => { if (r.mood) mc[r.mood] = (mc[r.mood] || 0) + 1; });
+        return Object.entries(mc).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+      })()
+    });
+
+    res.json({
+      studentName,
+      weekly:  buildStats(weeklyReports,  weeklyGames),
+      monthly: buildStats(monthlyReports, monthlyGames)
+    });
+  } catch (err) {
+    console.error('Parent-summary error:', err);
     res.status(500).json({ message: err.message });
   }
 });

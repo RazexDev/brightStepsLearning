@@ -9,10 +9,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, CalendarDays, BookOpen,
   ClipboardList, MessageSquare, LogOut,
-  RefreshCcw, Download, ExternalLink, Plus, Trash2, X, Send, Edit2, Check
+  RefreshCcw, Download, ExternalLink, Plus, Trash2, X, Send, Edit2, Check, Printer, BarChart3, TrendingUp
 } from 'lucide-react';
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
+  LineChart, Line, PieChart, Pie, Cell
+} from 'recharts';
 import s from './ParentDashboard.module.css';
-import { downloadSingleReportPDF, downloadRoutineReportPDF } from '../utils/pdfGenerator';
+import { downloadSingleReportPDF, downloadRoutineReportPDF, generateSingleReportPDF } from '../utils/pdfGenerator';
 
 
 /* ── Constants ─────────────────────────────── */
@@ -1066,6 +1070,7 @@ function ResourcesTab({ childName }) {
 ═══════════════════════════════════ */
 function ProgressTab({ childName }) {
   const [reports, setReports] = useState([]);
+  const [weeklyAnalytics, setWeeklyAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const load = React.useCallback(async () => {
@@ -1077,18 +1082,38 @@ function ProgressTab({ childName }) {
       const res  = await fetch(url, { headers: authHdr() });
       const data = await res.json();
       if (res.ok) setReports([...data].sort((a, b) => new Date(b.date) - new Date(a.date)));
+
+      if (childName) {
+        const anaRes = await fetch(`${API}/analytics/weekly?studentName=${encodeURIComponent(childName)}`, { headers: authHdr() });
+        if (anaRes.ok) {
+          const anaData = await anaRes.json();
+          setWeeklyAnalytics(anaData);
+        }
+      }
     } catch { /* silent */ }
     setLoading(false);
   }, [childName]);
 
   useEffect(() => { load(); }, [load, childName]);
 
-  const downloadPDF = (r) => {
+  const handlePrint = (r) => {
     downloadSingleReportPDF(r, 'BrightSteps — Progress Report');
+  };
+
+  const handleDownload = (r) => {
+    generateSingleReportPDF(r);
   };
 
   const totalHappy = reports.filter(r => r.mood === 'Happy' || r.mood === 'Excited').length;
   const totalStars = reports.reduce((sum, r) => sum + (r.stars || 0), 0);
+
+  const chartData = React.useMemo(() => {
+    return [...reports].reverse().map(r => ({
+      date: new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      stars: r.stars || 0,
+      duration: r.sessionDuration ? parseInt(r.sessionDuration) : 0
+    })).slice(-10); // Last 10 reports
+  }, [reports]);
 
   return (
     <>
@@ -1122,6 +1147,72 @@ function ProgressTab({ childName }) {
         </div>
       )}
 
+      {!loading && reports.length > 0 && (
+        <div style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '32px' }}>
+          <h3 style={{ margin: '0 0 20px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#1E1007' }}>
+            <BarChart3 size={20} color="#3DB5A0" /> Recent Progress Analytics
+          </h3>
+          <div style={{ height: '300px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                <XAxis dataKey="date" tick={{ fill: '#6B4C30', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="left" tick={{ fill: '#6B4C30', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: '#6B4C30', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  cursor={{ fill: 'rgba(61,181,160,0.05)' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#6B4C30' }} />
+                <Bar yAxisId="left" dataKey="stars" name="Stars Earned" fill="#F2B53A" radius={[4, 4, 0, 0]} barSize={30} />
+                <Bar yAxisId="right" dataKey="duration" name="Session Duration (mins)" fill="#3DB5A0" radius={[4, 4, 0, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {weeklyAnalytics && (
+        <div className="weekly-analytics-card">
+          <h3 className="wa-title">📅 Weekly Analytics</h3>
+          <div className="wa-stats-grid">
+            <div className="wa-stat-box">
+              <div className="wa-stat-val">{weeklyAnalytics.totalReportsThisWeek}</div>
+              <div className="wa-stat-label">Total Reports</div>
+            </div>
+            <div className="wa-stat-box">
+              <div className="wa-stat-val">{weeklyAnalytics.totalActivitiesThisWeek}</div>
+              <div className="wa-stat-label">Unique Activities</div>
+            </div>
+            <div className="wa-stat-box">
+              <div className="wa-stat-val" style={{fontSize: '1.2rem', lineHeight: '1.2'}}>{weeklyAnalytics.mostFrequentActivity || 'N/A'}</div>
+              <div className="wa-stat-label">Most Frequent Activity</div>
+            </div>
+            <div className="wa-stat-box">
+              <div className="wa-stat-val">{weeklyAnalytics.happyExcitedCount}</div>
+              <div className="wa-stat-label">Happy/Excited Days</div>
+            </div>
+          </div>
+          
+          <h4 className="wa-timeline-title">Activity Timeline (This Week)</h4>
+          <div className="wa-timeline">
+            {Object.keys(weeklyAnalytics.reportsByDay || {}).map(day => (
+              <div key={day} className="wa-timeline-day">
+                <div className="wa-day-label">{day}</div>
+                <div className="wa-day-activities">
+                  {weeklyAnalytics.reportsByDay[day].map((r, i) => (
+                    <span key={i} className="wa-day-activity-badge">{r.activity}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {Object.keys(weeklyAnalytics.reportsByDay || {}).length === 0 && (
+              <p style={{color: '#6B4C30', fontSize: '0.9rem', padding: '10px 0'}}>No activity recorded this week.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className={s.emptyState}><div className={s.emptyIcon}>⏳</div><p>Loading reports…</p></div>
       ) : reports.length === 0 ? (
@@ -1147,9 +1238,14 @@ function ProgressTab({ childName }) {
                   </span>
                 </div>
                 {r.notes && <div className={s.notesBox}>{r.notes}</div>}
-                <button className={s.pdfBtn} onClick={() => downloadPDF(r)}>
-                  <Download size={14} /> Download PDF
-                </button>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <button className={s.pdfBtn} style={{ flex: 1, justifyContent: 'center' }} onClick={() => handleDownload(r)}>
+                    <Download size={14} /> Download
+                  </button>
+                  <button className={s.pdfBtn} style={{ flex: 1, justifyContent: 'center' }} onClick={() => handlePrint(r)}>
+                    <Printer size={14} /> Print
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -1160,7 +1256,211 @@ function ProgressTab({ childName }) {
 }
 
 /* ═══════════════════════════════════
-   TAB 5 — TEACHER CHAT
+   TAB 5 — ANALYTICS
+═══════════════════════════════════ */
+const PIE_COLORS = ['#38bdf8','#4ade80','#fb923c','#f87171','#a78bfa','#fde047','#5ecfba'];
+
+function AnalyticsTab({ childName }) {
+  const [data, setData] = useState(null);
+  const [weeklyRaw, setWeeklyRaw] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [period, setPeriod] = useState('weekly');
+
+  const load = React.useCallback(async () => {
+    if (!childName) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [summRes, weekRes] = await Promise.all([
+        fetch(`${API}/analytics/parent-summary?studentName=${encodeURIComponent(childName)}`, { headers: authHdr() }),
+        fetch(`${API}/analytics/weekly?studentName=${encodeURIComponent(childName)}`, { headers: authHdr() }),
+      ]);
+      if (summRes.ok) {
+        const d = await summRes.json();
+        setData(d);
+      } else {
+        const txt = await summRes.text();
+        setError(`API error ${summRes.status}: ${txt.slice(0, 120)}`);
+      }
+      if (weekRes.ok) setWeeklyRaw(await weekRes.json());
+    } catch (e) {
+      setError(`Network error: ${e.message}`);
+    }
+    setLoading(false);
+  }, [childName]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return (
+    <div style={{ textAlign: 'center', padding: '60px 0' }}>
+      <div style={{ fontSize: '3rem' }}>⏳</div>
+      <p style={{ color: '#6B4C30', marginTop: 12 }}>Loading analytics…</p>
+    </div>
+  );
+
+  // Derive period stats — fall back to weeklyRaw when data is unavailable
+  const periodStats = data
+    ? (period === 'weekly' ? data.weekly : data.monthly)
+    : weeklyRaw
+    ? {
+        totalActivities:   weeklyRaw.totalReportsThisWeek   || 0,
+        gamesPlayed:       0,
+        totalStars:        0,
+        gameTime:          0,
+        uniqueActivities:  weeklyRaw.totalActivitiesThisWeek || 0,
+        happyExcitedCount: weeklyRaw.happyExcitedCount       || 0,
+      }
+    : null;
+
+  // Comparison chart — use real data if available, else weeklyRaw only
+  const comparisonData = data ? [
+    { metric: 'Reports',      weekly: data.weekly.totalActivities, monthly: data.monthly.totalActivities },
+    { metric: 'Games Played', weekly: data.weekly.gamesPlayed,     monthly: data.monthly.gamesPlayed },
+    { metric: 'Stars Earned', weekly: data.weekly.totalStars,      monthly: data.monthly.totalStars },
+    { metric: 'Game Time(s)', weekly: data.weekly.gameTime,        monthly: data.monthly.gameTime },
+  ] : weeklyRaw ? [
+    { metric: 'Reports',    weekly: weeklyRaw.totalReportsThisWeek   || 0, monthly: 0 },
+    { metric: 'Activities', weekly: weeklyRaw.totalActivitiesThisWeek || 0, monthly: 0 },
+    { metric: 'Happy Days', weekly: weeklyRaw.happyExcitedCount       || 0, monthly: 0 },
+  ] : [];
+
+  // Mood pie data
+  const moodPieData = weeklyRaw
+    ? Object.entries(weeklyRaw.moodsCount || {}).map(([name, value]) => ({ name, value }))
+    : [];
+
+  // Activity bar data (reports per day this week)
+  const activityBarData = weeklyRaw
+    ? Object.entries(weeklyRaw.reportsByDay || {}).map(([day, rpts]) => ({
+        day,
+        activities: rpts.length,
+      }))
+    : [];
+
+  return (
+    <>
+      {/* Header */}
+      <div className={s.sectionHeader}>
+        <div>
+          <h2><TrendingUp size={20} style={{ verticalAlign: 'middle', marginRight: 8, color: '#3DB5A0' }} />Analytics Dashboard</h2>
+          <p>Insights into <strong>{childName}</strong>'s report activity, games, and progress trends.</p>
+        </div>
+        <button className={s.refreshBtn} onClick={load}><RefreshCcw size={15} /> Refresh</button>
+      </div>
+
+      {/* Period Toggle */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+        {['weekly','monthly'].map(p => (
+          <button key={p} onClick={() => setPeriod(p)} style={{
+            padding: '8px 22px', borderRadius: 999, fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem',
+            border: period === p ? '2px solid #38bdf8' : '2px solid #e5e7eb',
+            background: period === p ? '#e0f5ff' : 'white',
+            color: period === p ? '#0ea5e9' : '#4a6074'
+          }}>
+            {p === 'weekly' ? '📅 This Week' : '📆 This Month'}
+          </button>
+        ))}
+      </div>
+
+      {/* Error banner */}
+      {error && (
+        <div style={{ background: '#fdeae6', border: '1.5px solid #E85C45', borderRadius: 12, padding: '12px 16px', marginBottom: 20, color: '#C0422F', fontSize: '0.88rem', fontWeight: 700 }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* ── Section 1: Student Report Activity ── */}
+      <div className="wa-section-title">📋 Student Report Activity</div>
+      <div className="wa-stats-grid" style={{ marginBottom: 32 }}>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">{periodStats != null ? (periodStats.totalActivities ?? 0) : '—'}</div>
+          <div className="wa-stat-label">Total Reports</div>
+        </div>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">{weeklyRaw != null ? (weeklyRaw.totalActivitiesThisWeek ?? 0) : (periodStats?.uniqueActivities ?? '—')}</div>
+          <div className="wa-stat-label">Unique Activities</div>
+        </div>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val" style={{ fontSize: '1.1rem', lineHeight: 1.3 }}>{weeklyRaw?.mostFrequentActivity || (periodStats != null ? 'None yet' : '—')}</div>
+          <div className="wa-stat-label">Top Activity</div>
+        </div>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">{weeklyRaw != null ? (weeklyRaw.happyExcitedCount ?? 0) : (periodStats?.happyExcitedCount ?? '—')}</div>
+          <div className="wa-stat-label">😊 Happy Days</div>
+        </div>
+      </div>
+
+      {/* Report Activity by Day (bar) */}
+      {activityBarData.length > 0 && (
+        <div className="wa-chart-card">
+          <h4 className="wa-chart-title">📅 Reports by Day (This Week)</h4>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={activityBarData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+              <XAxis dataKey="day" tick={{ fill: '#6B4C30', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#6B4C30', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+              <Bar dataKey="activities" name="Reports" fill="#38bdf8" radius={[6,6,0,0]} barSize={36} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+
+
+      {/* ── Section 2: Educational Games Analytics ── */}
+      <div className="wa-section-title" style={{ marginTop: 32 }}>🎮 Educational Games Analytics</div>
+      <div className="wa-stats-grid" style={{ marginBottom: 24 }}>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">{periodStats != null ? (periodStats.gamesPlayed ?? 0) : '—'}</div>
+          <div className="wa-stat-label">Games Played</div>
+        </div>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">{periodStats != null ? (periodStats.totalStars ?? 0) : '—'}</div>
+          <div className="wa-stat-label">⭐ Stars Earned</div>
+        </div>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">{periodStats != null ? (periodStats.gameTime > 0 ? `${Math.round(periodStats.gameTime / 60)}m` : '0m') : '—'}</div>
+          <div className="wa-stat-label">⏱️ Game Time</div>
+        </div>
+        <div className="wa-stat-box">
+          <div className="wa-stat-val">
+            {periodStats != null ? (periodStats.gamesPlayed > 0 ? (periodStats.totalStars / periodStats.gamesPlayed).toFixed(1) : '0') : '—'}
+          </div>
+          <div className="wa-stat-label">Avg Stars / Game</div>
+        </div>
+      </div>
+
+      {/* ── Section 3: Weekly vs Monthly Comparison ── */}
+      <div className="wa-section-title" style={{ marginTop: 32 }}>📊 Weekly vs Monthly Comparison</div>
+      {comparisonData.length > 0 ? (
+        <div className="wa-chart-card">
+          <h4 className="wa-chart-title">Side-by-side comparison of this week vs this month</h4>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={comparisonData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+              <XAxis dataKey="metric" tick={{ fill: '#6B4C30', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#6B4C30', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#6B4C30' }} />
+              <Bar dataKey="weekly" name="This Week" fill="#38bdf8" radius={[6,6,0,0]} barSize={28} />
+              <Bar dataKey="monthly" name="This Month" fill="#4ade80" radius={[6,6,0,0]} barSize={28} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className={s.emptyState}>
+          <div className={s.emptyIcon}>📭</div>
+          <p>No report data found for <strong>{childName}</strong> this week or month. Ask the teacher to submit a progress report!</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════
+   TAB 6 — TEACHER CHAT
 ═══════════════════════════════════ */
 const DUMMY_TEACHER_ID = '640000000000000000000000'; // Generic Inbox Pool
 
@@ -1256,11 +1556,12 @@ function TeacherChatTab({ user }) {
    MAIN — PARENT DASHBOARD
 ═══════════════════════════════════ */
 const TABS = [
-  { id: 'flags',    label: 'AI Chat Flags',   icon: <AlertTriangle size={16} /> },
-  { id: 'routines', label: 'Routines',         icon: <CalendarDays  size={16} /> },
-  { id: 'resources',label: 'Resources',        icon: <BookOpen      size={16} /> },
-  { id: 'reports',  label: 'Progress Reports', icon: <ClipboardList size={16} /> },
-  { id: 'chat',     label: 'Teacher Chat',     icon: <MessageSquare size={16} /> },
+  { id: 'flags',     label: 'AI Chat Flags',   icon: <AlertTriangle size={16} /> },
+  { id: 'routines',  label: 'Routines',         icon: <CalendarDays  size={16} /> },
+  { id: 'resources', label: 'Resources',        icon: <BookOpen      size={16} /> },
+  { id: 'reports',   label: 'Progress Reports', icon: <ClipboardList size={16} /> },
+  { id: 'analytics', label: 'Analytics',        icon: <BarChart3     size={16} /> },
+  { id: 'chat',      label: 'Teacher Chat',     icon: <MessageSquare size={16} /> },
 ];
 
 export default function ParentDashboard() {
@@ -1386,6 +1687,7 @@ export default function ParentDashboard() {
         {activeTab === 'routines'  && <RoutinesTab  childName={childName} />}
         {activeTab === 'resources' && <ResourcesTab childName={childName} />}
         {activeTab === 'reports'   && <ProgressTab  childName={childName} />}
+        {activeTab === 'analytics' && <AnalyticsTab childName={childName} />}
         {activeTab === 'chat'      && <TeacherChatTab user={user} />}
       </main>
 

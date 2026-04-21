@@ -1,3 +1,6 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 /**
  * utils/pdfGenerator.js
  * Utility for generating PDF reports in the Parent Portal.
@@ -7,6 +10,7 @@
  * Two exports:
  *   downloadSingleReportPDF(report, title)  — for individual progress reports
  *   downloadRoutineReportPDF(summary, childName) — for routine progress summaries
+ *   generateSingleReportPDF(report) - Uses jsPDF for direct PDF download
  */
 
 /* ─────────────────────────────────────────────────────
@@ -50,6 +54,76 @@ export function downloadSingleReportPDF(report, title = "BrightSteps — Progres
   `;
 
   _printHTML(html, title);
+}
+
+/* ─────────────────────────────────────────────────────
+   NEW — jsPDF Direct Download
+───────────────────────────────────────────────────── */
+export function generateSingleReportPDF(report) {
+  const doc = new jsPDF();
+  const dateStr = report.date ? new Date(report.date).toLocaleDateString() : 'N/A';
+  const name = report.studentName || 'Student';
+
+  // Title
+  doc.setFontSize(22);
+  doc.setTextColor(232, 92, 69); // #E85C45
+  doc.text('BrightSteps Progress Report', 14, 22);
+
+  // Meta
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+  // Table Data
+  const tableData = [
+    ['Student Name', name],
+    ['Date', dateStr],
+    ['Activity', report.activity || 'N/A'],
+    ['Skill Area', report.skillArea || 'N/A'],
+    ['Mood', report.mood || 'N/A'],
+    ['Engagement Level', report.engagementLevel || 'N/A'],
+    ['Progress Level', report.progressLevel || 'N/A'],
+    ['Attendance', report.attendanceStatus || 'N/A'],
+    ['Duration (mins)', report.sessionDuration || 'N/A']
+  ];
+
+  autoTable(doc, {
+    startY: 38,
+    head: [['Field', 'Details']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [61, 181, 160] },
+    styles: { fontSize: 11, cellPadding: 6 }
+  });
+
+  let finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) || 100;
+
+  if (report.notes) {
+    doc.setFontSize(12);
+    doc.setTextColor(61, 181, 160);
+    doc.text("Teacher's Notes:", 14, finalY + 12);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    const splitNotes = doc.splitTextToSize(report.notes, 180);
+    doc.text(splitNotes, 14, finalY + 18);
+    finalY += 18 + (splitNotes.length * 5);
+  }
+
+  if (report.recommendations) {
+    doc.setFontSize(12);
+    doc.setTextColor(61, 181, 160);
+    doc.text("Next Steps / Recommendations:", 14, finalY + 10);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    const splitRecs = doc.splitTextToSize(report.recommendations, 180);
+    doc.text(splitRecs, 14, finalY + 16);
+  }
+
+  const cleanName = name.replace(/[^a-zA-Z0-9]/g, '_');
+  const cleanDate = dateStr.replace(/\//g, '-');
+  doc.save(`${cleanName}_Progress_Report_${cleanDate}.pdf`);
 }
 
 /* ─────────────────────────────────────────────────────

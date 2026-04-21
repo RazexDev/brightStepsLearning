@@ -26,7 +26,7 @@ router.get('/students', protect, async (req, res) => {
 
     const students = await User.find(
       query,
-      '_id name email role createdAt assignedTeacher'  // never send passwords
+      '_id name email role createdAt assignedTeacher customId'  // never send passwords
     ).sort({ createdAt: -1 });
 
     res.json(students);
@@ -48,7 +48,7 @@ router.get('/all', protect, async (req, res) => {
 
     const allUsers = await User.find(
       {},
-      '_id name email role createdAt assignedTeacher'
+      '_id name email role createdAt assignedTeacher customId'
     ).sort({ createdAt: -1 });
 
     res.json(allUsers);

@@ -17,14 +17,37 @@ const userSchema = new mongoose.Schema({
   },
   parentPin: {
     type: String,
-    required: true,
+    required: false,
     minlength: 4,
     maxlength: 4
-  }, // 👈 NEW: The 4-digit Parent Lock
+  },
+  parentName: {
+    type: String,
+    default: ''
+  },
+  assignedTeacher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  customId: {
+    type: String,
+    unique: true,
+    sparse: true 
+  },
+  diagnosis: {
+    type: String,
+    enum: ['Autism', 'ADHD', 'Both', 'None', null],
+    default: null
+  },
   role: {
     type: String,
-    enum: ['parent', 'teacher', 'admin'], 
+    enum: ['parent', 'student', 'teacher', 'admin'], 
     default: 'parent',
+  },
+  profilePicUrl: {
+    type: String,
+    default: '',
   },
 }, { timestamps: true });
 

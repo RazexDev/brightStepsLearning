@@ -79,8 +79,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [parentPin, setParentPin] = useState(''); 
   const [role, setRole]         = useState('parent');
+  const [diagnosis, setDiagnosis] = useState('Autism');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [registeredId, setRegisteredId] = useState(null);
 
   // 🚀 NEW STATE: Tracks if we are in Step 2 of Google Auth
   const [isGoogleSetup, setIsGoogleSetup] = useState(false);
@@ -98,18 +100,29 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // 👇 Send the googleToken if it exists
-        body: JSON.stringify({ name, email, password, role, parentPin, googleToken }), 
+        body: JSON.stringify({ name, email, password, role, parentPin, googleToken, diagnosis }), 
       });
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem('brightsteps_token', data.token);
         const userToSave = data.user || data;
+
+        // Standardize: ensure studentId exists for students
+        if (userToSave.role === 'student' && !userToSave.studentId) {
+          userToSave.studentId = userToSave._id || userToSave.id;
+        }
+
         localStorage.setItem('brightsteps_user', JSON.stringify(userToSave));
-        navigate(role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+        
+        if (data.customId || userToSave.customId) {
+          setRegisteredId(data.customId || userToSave.customId);
+        } else {
+          navigate(userToSave.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+        }
       } else {
         setError(data.message || 'Registration failed.');
       }
@@ -125,7 +138,7 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/google', {
+      const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: credentialResponse.credential, role }), 
@@ -146,7 +159,12 @@ export default function RegisterPage() {
         localStorage.setItem('brightsteps_token', data.token);
         const userToSave = data.user || data;
         localStorage.setItem('brightsteps_user', JSON.stringify(userToSave));
-        navigate(userToSave.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+        
+        if (data.customId || userToSave.customId) {
+          setRegisteredId(data.customId || userToSave.customId);
+        } else {
+          navigate(userToSave.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+        }
       } else {
         setError(data.message || 'Google signup failed.');
       }
@@ -159,6 +177,26 @@ export default function RegisterPage() {
 
   return (
     <div className="login-wrapper">
+
+      {/* ── SUCCESS MODAL ── */}
+      {registeredId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'white', padding: '40px', borderRadius: '24px', textAlign: 'center', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎉</div>
+            <h2 style={{ fontFamily: '"Baloo 2", cursive', fontSize: '1.8rem', color: '#1E1007', marginBottom: '8px' }}>Registration Successful!</h2>
+            <p style={{ color: '#4A3D35', marginBottom: '24px' }}>Please write down your Institutional ID. You may need it for teacher connections.</p>
+            <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', padding: '16px', borderRadius: '12px', fontSize: '1.7rem', fontWeight: 800, color: '#6366F1', letterSpacing: '2px', marginBottom: '32px' }}>
+              {registeredId}
+            </div>
+            <button 
+              onClick={() => navigate(role === 'teacher' ? '/teacher-dashboard' : '/dashboard')}
+              style={{ background: '#6366F1', color: 'white', padding: '12px 24px', borderRadius: '12px', border: 'none', fontWeight: 700, cursor: 'pointer', width: '100%', fontSize: '1rem' }}
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── LEFT — decorative panel ── */}
       <RegisterPanel role={role} />
@@ -304,6 +342,27 @@ export default function RegisterPage() {
                   Used to unlock the Parent Dashboard settings.
                 </p>
               </div>
+
+              {/* Diagnosis Selection (Parent Only) */}
+              {role === 'parent' && (
+                <div className="lf-field">
+                  <label className="lf-label" htmlFor="diagnosis">Primary Diagnosis focus</label>
+                  <div className="lf-input-wrap">
+                    <select
+                      className="lf-input"
+                      id="diagnosis"
+                      value={diagnosis}
+                      onChange={(e) => setDiagnosis(e.target.value)}
+                      style={{ paddingLeft: '14px', appearance: 'none' }}
+                    >
+                      <option value="Autism">Autism Spectrum</option>
+                      <option value="ADHD">ADHD</option>
+                      <option value="Both">Both (Autism + ADHD)</option>
+                      <option value="None">Prefer not to say / None</option>
+                    </select>
+                  </div>
+                </div>
+              )}
 
             </div>
 

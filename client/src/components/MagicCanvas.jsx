@@ -17,7 +17,6 @@ export default function MagicCanvas({ style = {} }) {
 
     // ── helpers ─────────────────────────────────────────────────────────────
     const rand  = (a, b) => a + Math.random() * (b - a);
-    const lerp  = (a, b, t) => a + (b - a) * t;
     const TAU   = Math.PI * 2;
 
     // 3-D perspective projection

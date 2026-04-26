@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, Play, Award, Shapes, Smile } from 'lucide-react';
+import { ArrowLeft, Download, Award, Shapes, Smile } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './GameHub.css';
 
 // ─────────────────────────────────────────────────────────────────
-// useTilt hook — inline copy so GameHub is self-contained.
-// If you prefer, delete this and import from '../hooks/useTilt'.
+// RESTORED: Original smooth 3D tilt hook
 // ─────────────────────────────────────────────────────────────────
 function useTilt({ max = 14, scale = 1.04, glare = true } = {}) {
   const ref = useRef(null);
@@ -16,8 +15,8 @@ function useTilt({ max = 14, scale = 1.04, glare = true } = {}) {
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width  - 0.5) * 2; // −1 → 1
-    const y = ((e.clientY - rect.top)  / rect.height - 0.5) * 2; // −1 → 1
+    const x = ((e.clientX - rect.left) / rect.width  - 0.5) * 2; 
+    const y = ((e.clientY - rect.top)  / rect.height - 0.5) * 2; 
 
     const rotY =  x * max;
     const rotX = -y * max;
@@ -32,7 +31,6 @@ function useTilt({ max = 14, scale = 1.04, glare = true } = {}) {
         glareEl.className = 'tilt-glare';
         el.appendChild(glareEl);
       }
-      // normalise 0→1 for CSS custom properties
       const gx = ((x + 1) / 2) * 100;
       const gy = ((y + 1) / 2) * 100;
       glareEl.style.setProperty('--gx', `${gx}%`);
@@ -54,18 +52,10 @@ function useTilt({ max = 14, scale = 1.04, glare = true } = {}) {
   return { ref, handlers: { onMouseMove, onMouseLeave } };
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Helper: one card that uses its own tilt instance
-// ─────────────────────────────────────────────────────────────────
 function TiltCard({ className, dataEmoji, children }) {
   const { ref, handlers } = useTilt({ max: 10, scale: 1.025, glare: true });
   return (
-    <div
-      ref={ref}
-      className={className}
-      data-emoji={dataEmoji}
-      {...handlers}
-    >
+    <div ref={ref} className={className} data-emoji={dataEmoji} {...handlers}>
       {children}
     </div>
   );
@@ -80,9 +70,6 @@ function TiltEncourageCard({ children }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Star row helper
-// ─────────────────────────────────────────────────────────────────
 function StarRow({ filled = 0, total = 3, label }) {
   return (
     <div className="game-stars">
@@ -94,9 +81,6 @@ function StarRow({ filled = 0, total = 3, label }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Progress bar helper
-// ─────────────────────────────────────────────────────────────────
 function ProgressBar({ pct, levelLabel }) {
   return (
     <div className="game-progress">
@@ -111,22 +95,17 @@ function ProgressBar({ pct, levelLabel }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────
 export default function GameHub() {
   const [userName,   setUserName]   = useState('Student');
   const [gameStats,  setGameStats]  = useState([]);
   const [totalStars, setTotalStars] = useState(0);
 
-  // Per-game level state
   const [focusLevel,   setFocusLevel]   = useState(1);
   const [shapeLevel,   setShapeLevel]   = useState(1);
   const [emotionLevel, setEmotionLevel] = useState(1);
 
   const TOTAL_LEVELS = 4;
 
-  /* ── Load & Fetch ── */
   useEffect(() => {
     const userString = localStorage.getItem('brightsteps_user');
     if (userString) {
@@ -135,7 +114,7 @@ export default function GameHub() {
         setUserName(user.name || user.user?.name || 'Student');
         const id = user._id || user.user?.id;
         if (id) fetchGameStats(id);
-      } catch { /* parse error */ }
+      } catch { }
     }
 
     const savedFocus   = localStorage.getItem('brightsteps_focus_unlocked');
@@ -148,7 +127,7 @@ export default function GameHub() {
 
   const fetchGameStats = async (id) => {
     try {
-      const res  = await fetch(`http://localhost:5001/api/progress/${id}`);
+      const res  = await fetch(`/api/progress/${id}`);
       if (!res.ok) return;
       const data = await res.json();
       setGameStats(data);
@@ -162,10 +141,9 @@ export default function GameHub() {
       setFocusLevel(calcLevel('FocusMatch'));
       setShapeLevel(calcLevel('ShapeSort'));
       setEmotionLevel(calcLevel('EmotionExplorer'));
-    } catch { /* network error */ }
+    } catch { }
   };
 
-  /* ── PDF Report ── */
   const generatePDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(22);
@@ -191,8 +169,7 @@ export default function GameHub() {
     });
     doc.save(`${userName}_Game_Report.pdf`);
   };
-
-  /* ── Progress % ── */
+//Progress percentage
   const calcProgress = (gameName, currentUnlocked) => {
     const games = gameStats.filter(g => g.gameName === gameName);
     if (games.length > 0) {
@@ -206,7 +183,6 @@ export default function GameHub() {
   const shapePct   = calcProgress('ShapeSort',        shapeLevel);
   const emotionPct = calcProgress('EmotionExplorer',  emotionLevel);
 
-  /* ── Best stars per game ── */
   const bestStars = (name) => {
     const games = gameStats.filter(g => g.gameName === name);
     return games.length ? Math.max(...games.map(g => g.stars || 0)) : 0;
@@ -217,7 +193,7 @@ export default function GameHub() {
 
       {/* ══ HERO ══ */}
       <section className="hub-hero">
-        {/* Floating decorations */}
+        {/* RESTORED: Floating decorations */}
         <span className="hero-deco deco-star1">⭐</span>
         <span className="hero-deco deco-star2">✨</span>
         <span className="hero-deco deco-star3">🌟</span>
@@ -229,8 +205,8 @@ export default function GameHub() {
         <span className="hero-deco deco-heart">💛</span>
         <span className="hero-deco deco-music">🎵</span>
 
-        {/* Top row: back + download */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2, marginBottom: 36 }}>
+        {/* FIXED OVERLAP: The new hub-top-nav class handles spacing gracefully */}
+        <div className="hub-top-nav">
           <Link to="/dashboard" className="back-to-dash">
             <ArrowLeft size={16} /> Dashboard
           </Link>
@@ -239,7 +215,7 @@ export default function GameHub() {
           </button>
         </div>
 
-        {/* Title */}
+        {/* RESTORED: Original Title Block */}
         <div className="hero-title-block">
           <div className="hero-emoji-row">
             <span>🎮</span><span>🧩</span><span>⭐</span><span>🎨</span><span>🏆</span>
@@ -253,7 +229,6 @@ export default function GameHub() {
             Pick a game below and earn stars 🌟 Every level makes your brain stronger!
           </p>
 
-          {/* Stat pills */}
           <div className="hero-stats">
             <div className="stat-pill sp-amber">⭐ {totalStars} Stars Earned</div>
             <div className="stat-pill sp-teal">🎮 3 Games Available</div>

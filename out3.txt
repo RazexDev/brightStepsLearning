@@ -1,0 +1,3 @@
+﻿5aad214 (HEAD -> merge-feature-reports-into-dev, origin/merge-feature-reports-into-dev, dev) Integrate feature-reports into dev with teacher analytics and parent report view
+5b26691 (origin/dev) Updated RoutineDashboard.
+cd5f88c feat: complete Resource Management gamification overhaul with strict RBAC, offline models, and dynamic leveling

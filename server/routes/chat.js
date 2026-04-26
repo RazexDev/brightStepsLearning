@@ -31,7 +31,7 @@ CRITICAL RULES:
 2. Use simple, easy-to-understand words.
 3. Be highly encouraging and use emojis.
 4. NEVER give medical advice or talk about complex adult topics.
-5. If the child mentions bullying, sadness, hurting themselves, violence, or inappropriate topics, you MUST include the exact text "[FLAG]" somewhere in your response, and then reply gently with: "I'm always here for you. This sounds like something really important to share with a grown-up you trust."
+5. If the child expresses negative emotions (Frustrated, Anxious, Upset), or mentions bullying, sadness, hurting themselves, violence, or inappropriate topics, you MUST include the exact text "[FLAG: Emotion]" (e.g. [FLAG: Frustrated] or [FLAG: Upset]) somewhere in your response, and then reply gently with: "I'm always here for you. This sounds like something really important to share with a grown-up you trust."
     `;
 
     const recentMessages = chatRecord.messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
@@ -41,12 +41,22 @@ CRITICAL RULES:
     let aiResponse = result.response.text();
 
     let isFlagged = false;
-    if (aiResponse.includes('[FLAG]')) {
+    let emotionDetected = 'Flagged';
+    
+    const flagMatch = aiResponse.match(/\[FLAG:\s*([^\]]+)\]/i);
+    if (flagMatch || aiResponse.includes('[FLAG]')) {
       isFlagged = true;
-      aiResponse = aiResponse.replace('[FLAG]', '').trim();
+      if (flagMatch) {
+         emotionDetected = flagMatch[1].trim();
+         aiResponse = aiResponse.replace(flagMatch[0], '').trim();
+      } else {
+         aiResponse = aiResponse.replace('[FLAG]', '').trim();
+      }
 
       const newAlert = new Alert({
         childId,
+        studentName: childName,
+        emotion: emotionDetected,
         triggerMessage: message,
         aiReasoning: "Automated flag triggered by Sparky's safety filters."
       });

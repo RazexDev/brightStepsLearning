@@ -6,6 +6,13 @@ const AlertSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  studentName: {
+    type: String,
+  },
+  emotion: {
+    type: String,
+    default: 'Flagged'
+  },
   triggerMessage: { 
     type: String, 
     required: true 

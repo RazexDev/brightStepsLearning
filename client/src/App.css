@@ -1,38 +1,127 @@
-.App {
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* --- 🎨 YOUR UI CONTROL CENTER --- */
+:root {
+  /* Change these colors to completely re-theme your app! */
+  --primary-color: #38b2ac;       /* Main Button/Border Color */
+  --primary-hover: #319795;
+  --bg-color: #f0fdfa;            /* Dashboard Background */
+  --card-bg: #ffffff;             /* Form/List Box Color */
+  --text-dark: #2d3748;           /* Headings */
+  --text-light: #718096;          /* Normal Text */
+  --danger-color: #fc8181;        /* Delete/Logout Buttons */
+
+  /* Shapes & Shadows */
+  --radius-heavy: 24px;
+  --radius-soft: 12px;
+  --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  background-color: var(--bg-color);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text-dark);
+  margin: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* --- DASHBOARD LAYOUT --- */
+.dashboard-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.dashboard-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  margin-bottom: 40px;
+}
+
+.dashboard-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+/* --- CARDS (For Form & History Items) --- */
+.ui-card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius-heavy);
+  padding: 30px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 30px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.ui-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+/* --- FORM ELEMENTS --- */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--radius-soft);
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* --- BUTTONS --- */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 999px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.action-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
 }

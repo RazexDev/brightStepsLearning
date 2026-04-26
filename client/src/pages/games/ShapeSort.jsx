@@ -193,7 +193,7 @@ export default function ShapeSort() {
       totalMoves: moves, date: new Date().toISOString(),
     };
     try {
-      await fetch('http://localhost:5001/api/progress', {
+      await fetch('/api/progress', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -206,7 +206,7 @@ export default function ShapeSort() {
     setIsVerifying(true);
     try {
       const user     = JSON.parse(localStorage.getItem('brightsteps_user'));
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email || user.user?.email, password: parentPassword }),
       });

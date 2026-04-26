@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Lock, Unlock, RotateCcw, ChevronRight } from 'lucide-react';
 import './FocusMatch.css';
@@ -122,32 +122,8 @@ export default function FocusMatch() {
     }
   };
 
-  /* ── Check Win Condition & Trigger Save ── */
-  useEffect(() => {
-    const config = LEVEL_CONFIG.find(c => c.level === currentLevel);
-    if (config && matchedPairs.length === config.pairs && config.pairs > 0) {
-      clearInterval(timerRef.current);
-      setGameWon(true);
-      const event = new CustomEvent('sparky-cheer', { detail: { gameName: 'Focus Match' } });
-window.dispatchEvent(event);
-      
-      // 👉 Trigger the positive reinforcement sound
-      playWinSound();
-      
-      // Unlock next level if applicable
-      if (currentLevel === highestUnlocked && currentLevel < LEVEL_CONFIG.length) {
-        const next = currentLevel + 1;
-        setHighestUnlocked(next);
-        localStorage.setItem('brightsteps_focus_unlocked', next.toString());
-      }
-
-      // Save to database
-      saveProgress(config.pairs);
-    }
-  }, [matchedPairs, currentLevel, highestUnlocked]);
-
   /* ── Save Progress to MongoDB ── */
-  const saveProgress = async (totalPairs) => {
+  const saveProgress = useCallback(async (totalPairs) => {
     const starsEarned = getStars(moves, totalPairs); 
     const userString = localStorage.getItem('brightsteps_user');
     
@@ -178,7 +154,7 @@ window.dispatchEvent(event);
     };
     
     try {
-      const response = await fetch('http://localhost:5001/api/progress', {
+      const response = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -192,7 +168,31 @@ window.dispatchEvent(event);
     } catch (error) {
       console.error("❌ Failed to connect to backend API:", error);
     }
-  };
+  }, [currentLevel, elapsedSec, moves]);
+
+  /* ── Check Win Condition & Trigger Save ── */
+  useEffect(() => {
+    const config = LEVEL_CONFIG.find(c => c.level === currentLevel);
+    if (config && matchedPairs.length === config.pairs && config.pairs > 0) {
+      clearInterval(timerRef.current);
+      setGameWon(true);
+      const event = new CustomEvent('sparky-cheer', { detail: { gameName: 'Focus Match' } });
+      window.dispatchEvent(event);
+      
+      // 👉 Trigger the positive reinforcement sound
+      playWinSound();
+      
+      // Unlock next level if applicable
+      if (currentLevel === highestUnlocked && currentLevel < LEVEL_CONFIG.length) {
+        const next = currentLevel + 1;
+        setHighestUnlocked(next);
+        localStorage.setItem('brightsteps_focus_unlocked', next.toString());
+      }
+
+      // Save to database
+      saveProgress(config.pairs);
+    }
+  }, [matchedPairs, currentLevel, highestUnlocked, saveProgress]);
 
   /* ── Parent Gate Logic ── */
   const handleParentUnlockClick = () => {
@@ -212,7 +212,7 @@ window.dispatchEvent(event);
       const user = JSON.parse(userString);
       const emailToUse = user.email || (user.user && user.user.email);
 
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailToUse, password: parentPassword }),

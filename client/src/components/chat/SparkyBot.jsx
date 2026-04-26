@@ -59,7 +59,7 @@ export default function SparkyBot() {
       try {
         const secretPrompt = `[SYSTEM ALERT]: I just successfully completed the learning game "${gameName}"! Tell me how proud you are of me in 1 super enthusiastic sentence using emojis!`;
         
-        const response = await fetch('http://localhost:5001/api/chat', {
+        const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ childId, childName, message: secretPrompt }) 
@@ -94,7 +94,7 @@ export default function SparkyBot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ childId, childName, message: userMessage }) 

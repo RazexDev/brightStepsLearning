@@ -384,9 +384,9 @@ export default function LandingPage() {
           BrightSteps
         </a>
         <div className="footer-links">
-          <a href="#">Privacy</a>
-          <a href="#">About</a>
-          <a href="#">Contact</a>
+          <a href="/">Privacy</a>
+          <a href="/">About</a>
+          <a href="/">Contact</a>
         </div>
         <p className="footer-copy">
           Made with ♥ for every bright little learner · © {new Date().getFullYear()}

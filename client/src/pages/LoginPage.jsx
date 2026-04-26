@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google'; 
+import { redirectByRole } from '../utils/auth';
 import './LoginPage.css';
 
 /* ─────────────────────────────────────────
@@ -82,7 +83,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -92,8 +93,14 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem('brightsteps_token', data.token);
         const loggedInUser = data.user || data;
+
+        // Ensure studentId exists in the stored user object for legacy support
+        if (loggedInUser.role === 'student' && !loggedInUser.studentId) {
+          loggedInUser.studentId = loggedInUser._id || loggedInUser.id;
+        }
+
         localStorage.setItem('brightsteps_user', JSON.stringify(loggedInUser));
-        navigate(loggedInUser.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+        redirectByRole(loggedInUser.role, navigate);
       } else {
         setError(data.message || 'Invalid email or password.');
       }
@@ -109,7 +116,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/google', {
+      const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: credentialResponse.credential }),
@@ -127,7 +134,7 @@ export default function LoginPage() {
         localStorage.setItem('brightsteps_token', data.token);
         const loggedInUser = data.user || data;
         localStorage.setItem('brightsteps_user', JSON.stringify(loggedInUser));
-        navigate(loggedInUser.role === 'teacher' ? '/teacher-dashboard' : '/dashboard');
+        redirectByRole(loggedInUser.role, navigate);
       } else {
         setError(data.message || 'Google login failed.');
       }

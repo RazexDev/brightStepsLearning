@@ -151,9 +151,9 @@ export default function ResourceManager() {
       <div className="rm-hero">
 
         {/* Navigation Buttons */}
-        <div>
+        <div className="rm-nav">
           <Link to="/dashboard" className="back-to-dash">
-            <ArrowLeft size={18} /> Back to Dashboard
+            <ArrowLeft size={18} /> Back
           </Link>
 
           <Link
@@ -167,8 +167,9 @@ export default function ResourceManager() {
 
         {/* Title Section */}
         <div className="hero-title-block">
-          <h1>Available Resources</h1>
-          <p>Explore learning materials</p>
+          <span className="hero-emoji-big">📚</span>
+          <h1 className="hub-title">Available Resources</h1>
+          <p className="hub-subtitle">Explore learning materials made just for you!</p>
         </div>
       </div>
 
@@ -191,7 +192,7 @@ export default function ResourceManager() {
           </div>
 
           {/* Next goal */}
-          <div>
+          <div style={{ fontWeight: 800, color: 'var(--ink-mid)' }}>
             ✨ {nextGoal}
           </div>
         </div>
@@ -202,20 +203,20 @@ export default function ResourceManager() {
 
           {resources.map((res) => (
 
-            <div key={res._id} className={`resource-item card-${res.type}`}>
+            <div key={res._id} className={`resource-item card-${res.type}`} data-emoji={TYPE_EMOJI[res.type]}>
 
               <div className="resource-item-inner">
 
                 {/* Type Badge */}
-                <span>
+                <div className="type-badge">
                   {TYPE_EMOJI[res.type]} {TYPE_LABEL[res.type]}
-                </span>
+                </div>
 
                 {/* Title */}
                 <h3>{res.title}</h3>
 
                 {/* Instructions */}
-                <div>
+                <div className="instructions-text">
                   🗒️ {res.instructionalText}
                 </div>
 
@@ -226,22 +227,21 @@ export default function ResourceManager() {
 
                 {/* Text-to-Speech button for PDFs */}
                 {res.type === 'pdf' && (
-                  <button className="tts-btn" onClick={() => handleSpeak(res.instructionalText)}>
-                    <Volume2 size={16} /> Listen
+                  <button className="action-btn" onClick={() => handleSpeak(res.instructionalText)}>
+                    <Volume2 size={18} /> Listen
                   </button>
                 )}
 
                 {/* Offline resource modal */}
                 {res.type === 'offline' ? (
                   <button
-                    className="tts-btn"
-                    style={{ background: 'linear-gradient(135deg, var(--green) 0%, var(--mint) 100%)', boxShadow: '0 4px 0 var(--green-deep)' }}
+                    className="action-btn"
                     onClick={() => {
                       setSelectedOfflineResource(res);
                       setShowOfflineModal(true);
                     }}
                   >
-                    <FileText size={16} /> View Instructions
+                    <FileText size={18} /> View Instructions
                   </button>
 
                 ) : res.fileUrl ? (
@@ -249,24 +249,23 @@ export default function ResourceManager() {
                   // Open link resource
                   res.type === 'video' ? (
                     <button
-                      className="open-link"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                      className="action-btn"
                       onClick={() => {
                         logProgressAndRefresh(res.title, TYPE_LABEL[res.type]);
                         setActiveVideoUrl(res.fileUrl);
                       }}
                     >
-                      <ExternalLink size={16} /> Open
+                      <ExternalLink size={18} /> Watch
                     </button>
                   ) : (
                     <a
-                      className="open-link"
+                      className="action-btn"
                       href={res.fileUrl}
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => logProgressAndRefresh(res.title, TYPE_LABEL[res.type])}
                     >
-                      <ExternalLink size={16} /> Open
+                      <ExternalLink size={18} /> Open
                     </a>
                   )
 
@@ -281,27 +280,38 @@ export default function ResourceManager() {
 
       {/* Offline Modal */}
       {showOfflineModal && selectedOfflineResource && (
+        <div className="modal-overlay">
+          <div className="modal">
 
-        <div className="modal">
+            <h2>{selectedOfflineResource.title}</h2>
 
-          <h2>{selectedOfflineResource.title}</h2>
+            {/* Show instructions */}
+            <p style={{ fontSize: '1.1rem', color: 'var(--ink-mid)', marginBottom: '24px', lineHeight: 1.6 }}>
+              {selectedOfflineResource.offlineInstructions}
+            </p>
 
-          {/* Show instructions */}
-          <div>
-            {selectedOfflineResource.offlineInstructions}
+            {/* Complete button */}
+            <button
+              className="action-btn"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={async () => {
+                await logProgressAndRefresh(selectedOfflineResource.title, 'Offline Activity');
+                setShowOfflineModal(false);
+                setSelectedOfflineResource(null);
+              }}
+            >
+              ✅ I Completed It!
+            </button>
+            <button
+              style={{ marginTop: '12px', background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontWeight: 'bold', cursor: 'pointer' }}
+              onClick={() => {
+                setShowOfflineModal(false);
+                setSelectedOfflineResource(null);
+              }}
+            >
+              Close
+            </button>
           </div>
-
-          {/* Complete button */}
-          <button
-            onClick={async () => {
-              await logProgressAndRefresh(selectedOfflineResource.title, 'Offline Activity');
-              setShowOfflineModal(false);
-              setSelectedOfflineResource(null);
-            }}
-          >
-            ✅ I Completed It!
-          </button>
-
         </div>
       )}
 

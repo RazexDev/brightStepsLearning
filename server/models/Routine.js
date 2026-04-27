@@ -15,7 +15,7 @@ const routineSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     category: {
       type: String,
-      enum: ["morning", "evening", "study", "school", "bedtime", "custom"],
+      enum: ["morning", "evening", "study", "school", "bedtime", "custom", "Health", "Academic", "Behavior", "Self-care", "Other"],
       required: true
     },
     tasks: [taskSchema],
@@ -31,6 +31,9 @@ const routineSchema = new mongoose.Schema(
       required: true
     },
     studentName: { type: String },
+    taskName: { type: String, default: "" }, // mobile support
+    isCompleted: { type: Boolean, default: false }, // mobile support
+    timestamp: { type: Date, default: Date.now }, // mobile support
     type: { type: String, default: "general" },
     desc: { type: String, default: "" },
     tags: [{ type: String }],

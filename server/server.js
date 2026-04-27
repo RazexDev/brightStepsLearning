@@ -27,8 +27,32 @@ const progressRoutes = require('./routes/progressRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
+
+// Request logging for debugging
+const fs = require('fs');
+app.use((req, res, next) => {
+  const logMsg = `Request: ${req.method} ${req.url} | Body: ${JSON.stringify(req.body)} | Role: ${req.user?.role || 'unknown'}\n`;
+  console.log(logMsg.trim());
+  fs.appendFileSync('request_logs.txt', logMsg);
+  
+  // Also hook the response to log the status
+  const originalSend = res.send;
+  res.send = function (data) {
+    fs.appendFileSync('request_logs.txt', `Response: ${res.statusCode} ${data}\n`);
+    originalSend.call(this, data);
+  };
+  next();
+});
+
+// Test Route
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'Backend is reachable!' });
+});
 
 // Serve uploaded files (profile pictures etc.) as static assets
 const path = require('path');

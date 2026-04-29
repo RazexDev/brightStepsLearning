@@ -1,0 +1,367 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* =========================================
+   DESIGN TOKENS — same as LandingPage
+========================================= */
+:root {
+  --paper:       #FEFCF5;
+  --paper-2:     #FFF8EC;
+  --ink:         #1E1007;
+  --ink-mid:     #6B4C30;
+  --ink-soft:    #B8906A;
+
+  --rose:        #E85C45;
+  --rose-bg:     #FDEAE6;
+  --rose-dk:     #C0422F;
+
+  --amber:       #F2B53A;
+  --amber-bg:    #FEF4CC;
+  --amber-dk:    #C8881A;
+
+  --teal:        #3DB5A0;
+  --teal-bg:     #E0F7F3;
+  --teal-dk:     #1E8C78;
+
+  --sky:         #44A7CE;
+  --sky-bg:      #E1F3FB;
+  --sky-dk:      #2478A4;
+
+  --sage:        #5EAD6E;
+  --sage-bg:     #E2F6E7;
+  --sage-dk:     #3D8450;
+
+  --r-card:      20px;
+  --r-lg:        28px;
+  --r-pill:      999px;
+
+  --sh-lg:  0 24px 64px rgba(30,16,7,0.14);
+  --sh-card: 0 4px 0 rgba(30,16,7,0.08), 0 12px 36px rgba(30,16,7,0.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* =========================================
+   ROOT WRAPPER — full-height split
+========================================= */
+.login-wrapper {
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grain texture */
+.login-wrapper::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.7;
+}
+
+/* =========================================
+   LEFT PANEL — decorative brand side
+========================================= */
+.login-panel {
+  background: var(--ink);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 52px;
+  position: relative; overflow: hidden;
+}
+
+/* Big amber circle decoration */
+.login-panel::before {
+  content: '';
+  position: absolute; bottom: -120px; right: -120px;
+  width: 480px; height: 480px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(242,181,58,0.18) 0%, transparent 65%);
+  pointer-events: none;
+}
+.login-panel::after {
+  content: '';
+  position: absolute; top: -80px; left: -80px;
+  width: 320px; height: 320px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,92,69,0.14) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* Brand top */
+.lp-brand {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none; position: relative; z-index: 1;
+  animation: panelIn 0.6s 0.1s cubic-bezier(0.2,0.8,0.2,1) both;
+}
+.lp-logo-badge {
+  width: 40px; height: 40px; border-radius: 13px;
+  background: var(--rose); display: flex; align-items: center;
+  justify-content: center; font-size: 1.15rem;
+  box-shadow: 0 4px 0 var(--rose-dk);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.lp-brand:hover .lp-logo-badge { transform: rotate(-8deg) scale(1.1); }
+.lp-logo-name {
+  font-family: 'Baloo 2', cursive; font-weight: 800;
+  font-size: 1.4rem; color: white; letter-spacing: -0.3px;
+}
+.lp-logo-name em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--rose) 0%, var(--amber) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Middle illustration area */
+.lp-middle {
+  display: flex; flex-direction: column; gap: 32px;
+  position: relative; z-index: 1;
+  animation: panelIn 0.6s 0.25s cubic-bezier(0.2,0.8,0.2,1) both;
+}
+
+.lp-headline {
+  font-family: 'Baloo 2', cursive; font-weight: 800;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  line-height: 1.2; color: white; letter-spacing: -0.5px;
+}
+.lp-hl-accent { color: var(--amber); }
+
+.lp-sub {
+  font-size: 0.95rem; font-weight: 700; color: rgba(255,255,255,0.5);
+  line-height: 1.65; max-width: 340px;
+}
+
+/* Floating mini-cards */
+.lp-cards { display: flex; flex-direction: column; gap: 12px; }
+
+.lp-mini-card {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 14px 18px;
+  backdrop-filter: blur(10px);
+  animation: cardFloat var(--dur, 4s) var(--delay, 0s) ease-in-out infinite;
+}
+.lp-mini-card:nth-child(1) { --dur:4.5s; --delay:0s; }
+.lp-mini-card:nth-child(2) { --dur:5s;   --delay:0.8s; }
+.lp-mini-card:nth-child(3) { --dur:4.2s; --delay:1.5s; }
+@keyframes cardFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+
+.lp-mc-icon {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.lp-mc-icon.i-rose   { background: var(--rose-bg); }
+.lp-mc-icon.i-amber  { background: var(--amber-bg); }
+.lp-mc-icon.i-sage   { background: var(--sage-bg); }
+
+.lp-mc-text strong {
+  display: block; font-family: 'Baloo 2', cursive; font-weight: 700;
+  font-size: 0.88rem; color: white; margin-bottom: 2px;
+}
+.lp-mc-text span { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.38); }
+
+/* Bottom tagline */
+.lp-bottom {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.3);
+  position: relative; z-index: 1;
+  animation: panelIn 0.6s 0.4s cubic-bezier(0.2,0.8,0.2,1) both;
+}
+.lp-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0;
+  animation: dotPulse 1.8s ease-in-out infinite;
+}
+@keyframes dotPulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.8);opacity:0.4;} }
+
+@keyframes panelIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+
+/* =========================================
+   RIGHT PANEL — the form
+========================================= */
+.login-form-side {
+  background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 56px;
+  animation: formSideIn 0.7s 0.15s cubic-bezier(0.2,0.8,0.2,1) both;
+}
+@keyframes formSideIn { from{opacity:0;transform:translateX(30px);} to{opacity:1;transform:translateX(0);} }
+
+.login-form-box {
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+
+/* Form header */
+.lf-header { display: flex; flex-direction: column; gap: 8px; }
+
+.lf-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--amber-bg); border: 2px solid var(--amber);
+  color: var(--amber-dk); font-weight: 800; font-size: 0.75rem;
+  padding: 5px 14px; border-radius: var(--r-pill);
+  letter-spacing: 0.5px; text-transform: uppercase;
+  width: fit-content;
+}
+
+.lf-title {
+  font-family: 'Baloo 2', cursive; font-weight: 800;
+  font-size: 2.2rem; color: var(--ink); letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.lf-sub {
+  font-size: 0.9rem; font-weight: 700; color: var(--ink-mid); line-height: 1.55;
+}
+
+/* Error box */
+.lf-error {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--rose-bg); border: 2px solid var(--rose);
+  border-radius: 14px; padding: 12px 16px;
+  font-weight: 800; font-size: 0.85rem; color: var(--rose-dk);
+  animation: errorShake 0.4s cubic-bezier(0.36,0.07,0.19,0.97) both;
+}
+.lf-error-icon { font-size: 1rem; flex-shrink: 0; }
+@keyframes errorShake {
+  10%,90%  { transform: translateX(-2px); }
+  20%,80%  { transform: translateX(4px); }
+  30%,50%,70% { transform: translateX(-4px); }
+  40%,60%  { transform: translateX(4px); }
+}
+
+/* Form fields */
+.lf-fields { display: flex; flex-direction: column; gap: 18px; }
+
+.lf-field { display: flex; flex-direction: column; gap: 7px; }
+
+.lf-label {
+  font-weight: 800; font-size: 0.82rem; color: var(--ink);
+  letter-spacing: 0.3px;
+}
+
+.lf-input-wrap { position: relative; }
+
+.lf-input-icon {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-soft); pointer-events: none;
+  display: flex; align-items: center;
+}
+
+.lf-input {
+  width: 100%;
+  background: white;
+  border: 2px solid rgba(30,16,7,0.12);
+  border-radius: 14px;
+  padding: 14px 16px 14px 44px;
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(30,16,7,0.04);
+}
+.lf-input::placeholder { color: var(--ink-soft); font-weight: 600; }
+.lf-input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 4px rgba(232,92,69,0.12), 0 2px 8px rgba(30,16,7,0.06);
+}
+
+/* Role selector */
+.lf-role-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.lf-role-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 12px; border-radius: 14px; cursor: pointer;
+  border: 2px solid rgba(30,16,7,0.12);
+  background: white; font-family: 'Nunito', sans-serif;
+  font-weight: 800; font-size: 0.82rem; color: var(--ink-mid);
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.lf-role-btn:hover { border-color: var(--rose); color: var(--rose-dk); background: var(--rose-bg); transform: translateY(-2px); }
+.lf-role-btn.active { border-color: var(--rose); color: var(--rose-dk); background: var(--rose-bg); box-shadow: 0 4px 0 rgba(232,92,69,0.15); transform: translateY(-2px); }
+.lf-role-emoji { font-size: 1.6rem; }
+
+/* Submit button */
+.lf-submit {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--ink); color: var(--paper);
+  padding: 16px 32px; border-radius: var(--r-pill);
+  font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 1.05rem;
+  letter-spacing: -0.2px; border: none; cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 12px 28px rgba(30,16,7,0.18);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative; overflow: hidden;
+}
+.lf-submit::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+  transform: translateX(-120%); transition: transform 0.5s ease;
+}
+.lf-submit:hover::before { transform: translateX(120%); }
+.lf-submit:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 rgba(0,0,0,0.35), 0 18px 36px rgba(30,16,7,0.22);
+}
+.lf-submit:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.35); }
+.lf-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+/* Loading spinner */
+.lf-spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Divider */
+.lf-divider {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 0.78rem; font-weight: 800; color: var(--ink-soft);
+}
+.lf-divider::before, .lf-divider::after {
+  content: ''; flex: 1; height: 1.5px;
+  background: rgba(30,16,7,0.1);
+}
+
+/* Sign up link */
+.lf-signup {
+  text-align: center; font-size: 0.88rem; font-weight: 700; color: var(--ink-mid);
+}
+.lf-signup a {
+  color: var(--rose); text-decoration: none; font-weight: 800;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.lf-signup a:hover { border-color: var(--rose); }
+
+/* Back link */
+.lf-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.82rem; font-weight: 800; color: var(--ink-soft);
+  text-decoration: none;
+  padding: 6px 0;
+  border-bottom: 2px dashed transparent;
+  transition: color 0.2s, border-color 0.2s;
+  width: fit-content;
+}
+.lf-back:hover { color: var(--ink); border-color: rgba(30,16,7,0.25); }
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+@media (max-width: 860px) {
+  .login-wrapper { grid-template-columns: 1fr; }
+  .login-panel { display: none; }
+  .login-form-side { padding: 40px 28px; align-items: flex-start; padding-top: 60px; }
+  .login-form-box { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .login-form-side { padding: 40px 20px; }
+  .lf-title { font-size: 1.9rem; }
+}

@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 const { protect, parent } = require('../middleware/authMiddleware');
 
@@ -27,7 +26,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Role must be parent or student.' });
     }
 
-    let finalEmail = email;
+    let finalEmail = email ? email.toLowerCase() : email;
 
     // Google signup
     if (googleToken) {
@@ -117,7 +116,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    const user = await User.findOne({ email });
+    const lowerCaseEmail = email.toLowerCase();
+    const user = await User.findOne({ email: lowerCaseEmail });
 
     if (user && (await user.matchPassword(password))) {
       const generatedToken = generateToken(user._id);
@@ -185,14 +185,7 @@ router.post('/verify-pin', async (req, res) => {
       });
     }
 
-    let isMatch = false;
-    if (user.parentPin.length === 60) {
-      isMatch = await bcrypt.compare(pin, user.parentPin);
-    } else {
-      isMatch = (user.parentPin === pin);
-    }
-
-    if (!isMatch) {
+    if (user.parentPin !== pin) {
       console.warn(`❌ [verify-pin] Incorrect PIN for student ${user.name}.`);
       return res.status(401).json({ 
         success: false, 

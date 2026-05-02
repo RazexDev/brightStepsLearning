@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const resourceSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    type: { type: String, enum: ['video', 'pdf', 'link', 'offline'], required: true },
+    type: { type: String, enum: ['video', 'pdf', 'image', 'document', 'link', 'offline'], required: true },
     fileUrl: { type: String }, // Optional for offline
     instructionalText: { type: String, required: true },
     offlineInstructions: { type: String }, // Used only for offline activities
@@ -30,6 +30,9 @@ const resourceSchema = new mongoose.Schema({
         haha: { type: Number, default: 0 },
         wow: { type: Number, default: 0 }
     },
+
+    // Per-student access tracking — stores names of students who opened this resource
+    accessedBy: [{ type: String }],
     
     createdAt: { type: Date, default: Date.now }
 });

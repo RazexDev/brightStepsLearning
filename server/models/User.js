@@ -52,22 +52,15 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // SECURITY: Encrypt password BEFORE saving to the database
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
+  // If the password wasn't modified OR doesn't exist (Google Auth prep), skip encryption
+  if (!this.isModified('password') || !this.password) {
+    return; 
+  }
+  
   // Generate a 'salt' and scramble the password
-  if (this.isModified('password') && this.password) {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-  }
-
-  // Encrypt Parent PIN if it's new or modified
-  if (this.isModified('parentPin') && this.parentPin) {
-    if (this.parentPin.length === 4) { // Only hash if it's plaintext
-      const salt = await bcrypt.genSalt(10);
-      this.parentPin = await bcrypt.hash(this.parentPin, salt);
-    }
-  }
-
-  next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Helper function to compare passwords when they try to log in

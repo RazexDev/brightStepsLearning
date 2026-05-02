@@ -143,30 +143,6 @@ router.patch('/:studentId/assign', protect, async (req, res) => {
 // =============================================================
 
 /**
- * PUT /api/users/bulk-assign
- * Bulk assigns multiple users to a single teacher.
- */
-router.put('/bulk-assign', protect, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admins only.' });
-    }
-    const { userIds, teacherId } = req.body;
-    if (!Array.isArray(userIds) || userIds.length === 0) {
-      return res.status(400).json({ message: 'Please provide an array of userIds.' });
-    }
-    const result = await User.updateMany(
-      { _id: { $in: userIds } },
-      { $set: { assignedTeacher: teacherId || null } }
-    );
-    res.json({ message: 'Users bulk assigned successfully', updatedCount: result.modifiedCount });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-
-/**
  * PUT /api/users/profile/:id
  * Updates a user's profile (name, password, profile picture).
  * Accepts multipart/form-data for file uploads via Multer.

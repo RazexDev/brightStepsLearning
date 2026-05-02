@@ -64,7 +64,9 @@ app.use('/api/alerts', alertRoutes);
 
 // Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI, {
-  family: 4
+  family: 4,
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
 })
   .then(() => console.log('✅ Connected to MongoDB Atlas Cloud!'))
   .catch((err) => console.error('❌ Database connection error:', err));
@@ -77,7 +79,6 @@ app.use('/api/templates', require('./routes/templates'));
 app.use('/api/extra-tasks', require('./routes/extraTasks'));
 app.use('/api/resources', require('./routes/resourceRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/games', require('./routes/gamesRoutes'));
 app.use('/api/flags', require('./routes/chatRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/skills', require('./routes/skillAreaRoutes'));

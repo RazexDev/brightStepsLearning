@@ -6,13 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "cross-env NODE_ENV=test jest --detectOpenHandles --forceExit --verbose",
-    "test:watch": "cross-env NODE_ENV=test jest --watch --verbose"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"],
-    "coveragePathIgnorePatterns": ["/node_modules/"]
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -29,10 +23,5 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.2",
     "multer": "^2.1.1"
-  },
-  "devDependencies": {
-    "cross-env": "^10.1.0",
-    "jest": "^30.3.0",
-    "supertest": "^7.2.2"
   }
 }

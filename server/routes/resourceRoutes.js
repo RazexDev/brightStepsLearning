@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Resource = require('../models/Resource');
 const Progress = require('../models/Progress');
-const ResourceLog = require('../models/ResourceLog');
 
-// POST route (Save Resource)
+// POST route (Save Resource - JSON only)
 router.post('/', async (req, res) => {
   try {
     const { title, type, fileUrl, instructionalText, targetSkill, studentName, requiredLevel, offlineInstructions } = req.body;
@@ -15,6 +14,11 @@ router.post('/', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+// POST route for File Uploads (PDFs, Images to Cloudinary)
+const upload = require('../middleware/routineUpload'); // Reuse multer config
+const { uploadResource } = require('../controllers/resourceController');
+router.post('/upload', upload.single('file'), uploadResource);
 
 // GET route (Fetch ALL Resources - Used by Teacher Dashboard)
 router.get('/', async (req, res) => {
@@ -99,29 +103,19 @@ router.put('/:id/react', async (req, res) => {
   }
 });
 
-// POST /track — Upsert a resource view log for a student
-router.post('/track', async (req, res) => {
+// PUT route (Per-student access tracking)
+router.put('/:id/access', async (req, res) => {
   try {
-    const { studentId, resourceName, resourceType } = req.body;
-    if (!studentId || !resourceName) {
-      return res.status(400).json({ message: 'studentId and resourceName are required' });
+    const { studentName } = req.body;
+    if (!studentName) {
+      return res.status(400).json({ error: 'studentName is required' });
     }
-    const log = await ResourceLog.findOneAndUpdate(
-      { studentId, resourceName },
-      { $inc: { viewCount: 1 }, $set: { lastViewed: new Date(), resourceType } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+    const updatedResource = await Resource.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { accessedBy: studentName } }, // $addToSet prevents duplicates
+      { new: true }
     );
-    res.status(200).json(log);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /report/:studentId — Fetch all resource logs for a student
-router.get('/report/:studentId', async (req, res) => {
-  try {
-    const logs = await ResourceLog.find({ studentId: req.params.studentId }).sort({ lastViewed: -1 });
-    res.json(logs);
+    res.status(200).json(updatedResource);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
